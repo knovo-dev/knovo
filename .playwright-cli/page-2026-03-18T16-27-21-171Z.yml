@@ -1,0 +1,104 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Knovo" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - button "Open menu" [ref=e6] [cursor=pointer]:
+          - img [ref=e7]
+      - generic [ref=e8]:
+        - link "Guides" [ref=e9] [cursor=pointer]:
+          - /url: /guides
+        - link "Tools (coming soon)" [ref=e10] [cursor=pointer]:
+          - /url: /tools
+        - link "Community (coming soon)" [ref=e11] [cursor=pointer]:
+          - /url: /community
+        - link "About" [ref=e12] [cursor=pointer]:
+          - /url: /about
+        - generic [ref=e13]:
+          - button "Toggle dark mode" [ref=e14] [cursor=pointer]:
+            - img [ref=e15]
+          - link "Get started free" [ref=e21] [cursor=pointer]:
+            - /url: /guides
+            - button "Get started free" [ref=e22]
+    - main [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e26]:
+          - paragraph [ref=e27]: The world's most complete AI knowledge hub
+          - heading "Master AI. Build with confidence." [level=1] [ref=e28]
+          - paragraph [ref=e29]: The most comprehensive, always-updated knowledge hub for AI engineers, researchers, and builders.
+          - generic [ref=e30]:
+            - link "Start learning" [ref=e31] [cursor=pointer]:
+              - /url: /guides
+              - button "Start learning" [ref=e32]:
+                - text: Start learning
+                - img [ref=e33]
+            - link "Browse all guides" [ref=e35] [cursor=pointer]:
+              - /url: /guides
+              - button "Browse all guides" [ref=e36]
+        - generic [ref=e38]: 50+ deep guides - 12 knowledge domains - Updated weekly
+        - generic [ref=e39]:
+          - generic [ref=e41]:
+            - paragraph [ref=e42]: Featured guides
+            - heading "Start with the essentials" [level=2] [ref=e43]
+          - generic [ref=e44]:
+            - link "Prompt Engineering Learn reusable prompting patterns, system prompt design, evaluation, and failure-proof instruction writing. 18 min read Prompt Engineering" [ref=e45] [cursor=pointer]:
+              - /url: /guides/prompt-engineering-guide
+              - generic [ref=e46]:
+                - img [ref=e48]
+                - heading "Prompt Engineering" [level=3] [ref=e60]
+                - paragraph [ref=e61]: Learn reusable prompting patterns, system prompt design, evaluation, and failure-proof instruction writing.
+                - generic [ref=e62]:
+                  - generic [ref=e63]: 18 min read
+                  - generic [ref=e64]: Prompt Engineering
+            - link "RAG Systems Build retrieval pipelines with strong chunking, embedding, reranking, grounding, and evaluation foundations. 20 min read RAG Systems" [ref=e65] [cursor=pointer]:
+              - /url: /guides/how-to-build-rag
+              - generic [ref=e66]:
+                - img [ref=e68]
+                - heading "RAG Systems" [level=3] [ref=e73]
+                - paragraph [ref=e74]: Build retrieval pipelines with strong chunking, embedding, reranking, grounding, and evaluation foundations.
+                - generic [ref=e75]:
+                  - generic [ref=e76]: 20 min read
+                  - generic [ref=e77]: RAG Systems
+            - link "AI Agents Understand planning, tool use, memory, orchestration, and what makes agents reliable in production. Coming soon AI Agents" [ref=e78] [cursor=pointer]:
+              - /url: /guides
+              - generic [ref=e79]:
+                - img [ref=e81]
+                - heading "AI Agents" [level=3] [ref=e84]
+                - paragraph [ref=e85]: Understand planning, tool use, memory, orchestration, and what makes agents reliable in production.
+                - generic [ref=e86]:
+                  - generic [ref=e87]: Coming soon
+                  - generic [ref=e88]: AI Agents
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - paragraph [ref=e93]: Newsletter
+            - heading "Get weekly AI insights" [level=2] [ref=e94]
+            - paragraph [ref=e95]: Join builders who want practical breakdowns of new models, architectures, evaluation methods, and implementation patterns without the hype.
+          - generic [ref=e96]:
+            - textbox "Enter your email" [ref=e97]
+            - button "Subscribe" [ref=e98] [cursor=pointer]
+    - contentinfo [ref=e99]:
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - paragraph [ref=e102]: Knovo
+          - paragraph [ref=e103]: The world's most complete AI knowledge hub for builders who want depth, clarity, and practical guidance.
+        - generic [ref=e104]:
+          - paragraph [ref=e105]: Explore
+          - generic [ref=e106]:
+            - link "Guides" [ref=e107] [cursor=pointer]:
+              - /url: /guides
+            - link "Tools" [ref=e108] [cursor=pointer]:
+              - /url: /tools
+            - link "Community" [ref=e109] [cursor=pointer]:
+              - /url: /community
+        - generic [ref=e110]:
+          - paragraph [ref=e111]: Company
+          - generic [ref=e112]:
+            - link "About" [ref=e113] [cursor=pointer]:
+              - /url: /about
+            - link "Latest guides" [ref=e114] [cursor=pointer]:
+              - /url: /guides
+        - generic [ref=e115]:
+          - paragraph [ref=e116]: Tagline
+          - paragraph [ref=e117]: The world's most complete AI knowledge hub.
+  - alert [ref=e118]

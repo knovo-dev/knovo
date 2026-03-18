@@ -1,0 +1,377 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Knovo" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - button "Open menu" [ref=e440] [cursor=pointer]:
+          - img [ref=e441]
+      - generic [ref=e442]:
+        - link "Guides" [ref=e443] [cursor=pointer]:
+          - /url: /guides
+        - link "Tools (coming soon)" [ref=e444] [cursor=pointer]:
+          - /url: /tools
+        - link "Community (coming soon)" [ref=e445] [cursor=pointer]:
+          - /url: /community
+        - link "About" [ref=e446] [cursor=pointer]:
+          - /url: /about
+        - generic [ref=e447]:
+          - button "Toggle dark mode" [ref=e448] [cursor=pointer]:
+            - img [ref=e449]
+          - link "Get started free" [ref=e455] [cursor=pointer]:
+            - /url: /guides
+            - button "Get started free" [ref=e456]
+    - main [ref=e23]:
+      - generic [ref=e25]:
+        - navigation [ref=e26]:
+          - link "Home" [ref=e27] [cursor=pointer]:
+            - /url: /
+          - img [ref=e28]
+          - link "Guides" [ref=e30] [cursor=pointer]:
+            - /url: /guides
+          - img [ref=e31]
+          - generic [ref=e33]: The complete prompt engineering guide (2025)
+        - article [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e38]: Last verified 2026-03-18
+            - heading "The complete prompt engineering guide (2025)" [level=1] [ref=e39]
+            - paragraph [ref=e40]: A practical, end-to-end guide to designing prompts that produce reliable, structured, and high-quality outputs from modern LLMs.
+            - generic [ref=e41]:
+              - generic [ref=e42]: By Knovo Team
+              - generic [ref=e43]: 2025-11-12
+              - generic [ref=e44]: 18 min read
+            - generic [ref=e46]:
+              - link "Share on X" [ref=e47] [cursor=pointer]:
+                - /url: https://twitter.com/intent/tweet?text=The%20complete%20prompt%20engineering%20guide%20(2025)&url=https%3A%2F%2Fknovo.ai%2Fguides%2Fprompt-engineering-guide
+                - button "Share on X" [ref=e48]:
+                  - img [ref=e49]
+                  - text: Share on X
+              - link "LinkedIn" [ref=e51] [cursor=pointer]:
+                - /url: https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fknovo.ai%2Fguides%2Fprompt-engineering-guide
+                - button "LinkedIn" [ref=e52]:
+                  - img [ref=e53]
+                  - text: LinkedIn
+              - button "Copy link" [ref=e57] [cursor=pointer]:
+                - img [ref=e58]
+                - text: Copy link
+          - generic [ref=e61]:
+            - paragraph [ref=e62]: Prompt engineering is the discipline of getting useful, reliable work from language models by shaping the input, constraints, examples, and success criteria. It sounds simple because it starts with plain text. In practice, it is one of the most leveraged skills in applied AI because the same model can look wildly better or worse depending on how clearly we define the job.
+            - paragraph [ref=e63]: This guide is written for builders who want more than a list of tricks. The goal is to give you a durable mental model that still works as models improve. Good prompting is not about discovering a magical phrase. It is about reducing ambiguity, clarifying task boundaries, and making the model's next step obvious.
+            - heading "Introduction" [level=2] [ref=e64]
+            - paragraph [ref=e65]: A prompt is an interface. When you prompt a model, you are doing the same design work you would do when building a form, writing an API contract, or defining a product requirement. The model needs context, task framing, constraints, and a definition of done. If any of those are missing, you should expect drift.
+            - paragraph [ref=e66]: "Most prompt failures come from one of five causes:"
+            - list [ref=e67]:
+              - listitem [ref=e68]: The task is underspecified.
+              - listitem [ref=e69]: The prompt mixes multiple objectives without priority.
+              - listitem [ref=e70]: The output format is vague.
+              - listitem [ref=e71]: The model lacks needed context.
+              - listitem [ref=e72]: The prompt asks for reasoning quality without giving the model a process to follow.
+            - paragraph [ref=e73]: "Prompt engineering becomes much easier when you split the work into layers:"
+            - list [ref=e74]:
+              - listitem [ref=e75]: "Role or framing: what kind of assistant should the model be?"
+              - listitem [ref=e76]: "Objective: what exactly should it do?"
+              - listitem [ref=e77]: "Context: what background information matters?"
+              - listitem [ref=e78]: "Constraints: what should it avoid or enforce?"
+              - listitem [ref=e79]: "Output contract: what shape should the answer have?"
+            - paragraph [ref=e80]: "Here is a solid default skeleton:"
+            - figure [ref=e81]:
+              - code [ref=e83]:
+                - generic [ref=e84]: You are an expert technical editor.
+                - generic [ref=e86]: "Task:"
+                - generic [ref=e87]: Rewrite the following release notes for developers.
+                - generic [ref=e89]: "Context:"
+                - generic [ref=e90]: "- Audience: backend engineers"
+                - generic [ref=e91]: "- Tone: concise, factual, practical"
+                - generic [ref=e92]: "- Avoid hype or marketing language"
+                - generic [ref=e94]: "Requirements:"
+                - generic [ref=e95]: "- Keep all technical details"
+                - generic [ref=e96]: "- Use bullet points"
+                - generic [ref=e97]: "- Keep under 180 words"
+                - generic [ref=e98]: "- Mention breaking changes first"
+                - generic [ref=e100]: "Output:"
+                - generic [ref=e101]: "- A short heading"
+                - generic [ref=e102]: "- 4-6 bullets"
+                - generic [ref=e104]: "Input:"
+                - generic [ref=e105]: <paste content here>
+            - paragraph [ref=e106]: That structure works because it reduces uncertainty. The model knows the audience, the format, and what to prioritize. The more ambiguous the task, the more you should lean on explicit structure.
+            - heading "Zero-shot prompting" [level=2] [ref=e107]
+            - paragraph [ref=e108]: Zero-shot prompting means you ask the model to perform a task without examples. This works well when the task is familiar, the instructions are clear, and the output format is simple.
+            - paragraph [ref=e109]: "A weak zero-shot prompt looks like this:"
+            - figure [ref=e110]:
+              - code [ref=e112]:
+                - generic [ref=e113]: Explain RAG to me.
+            - paragraph [ref=e114]: This is not wrong, but it leaves everything unspecified. What level? What audience? What depth? What format? Good prompting is often just good specification.
+            - paragraph [ref=e115]: "A stronger zero-shot prompt:"
+            - figure [ref=e116]:
+              - code [ref=e118]:
+                - generic [ref=e119]: Explain retrieval-augmented generation (RAG) to a software engineer who knows APIs
+                - generic [ref=e120]: but is new to LLM systems.
+                - generic [ref=e122]: "Requirements:"
+                - generic [ref=e123]: "- Start with a one-sentence definition"
+                - generic [ref=e124]: "- Then explain the retrieval step and generation step separately"
+                - generic [ref=e125]: "- Use one real-world product analogy"
+                - generic [ref=e126]: "- End with 3 implementation pitfalls"
+                - generic [ref=e127]: "- Keep the answer under 350 words"
+            - paragraph [ref=e128]: The difference is that the model no longer has to guess. You have eliminated several hidden choices. When zero-shot prompting fails, do not immediately jump to complex methods. First ask whether your task description is complete.
+            - paragraph [ref=e129]: "Zero-shot prompts are strongest when:"
+            - list [ref=e130]:
+              - listitem [ref=e131]: The task is common and well represented in training data.
+              - listitem [ref=e132]: The answer format is straightforward.
+              - listitem [ref=e133]: You can define success clearly in words.
+              - listitem [ref=e134]: You do not need strict style imitation.
+            - paragraph [ref=e135]: "Zero-shot prompts struggle when:"
+            - list [ref=e136]:
+              - listitem [ref=e137]: The task is highly specialized or domain specific.
+              - listitem [ref=e138]: You need a very precise formatting pattern.
+              - listitem [ref=e139]: You want the model to imitate a narrow style or taxonomy.
+              - listitem [ref=e140]: The task requires subtle judgment that is easier to demonstrate than explain.
+            - paragraph [ref=e141]: "One useful pattern is instruction plus checklist:"
+            - figure [ref=e142]:
+              - code [ref=e144]:
+                - generic [ref=e145]: Summarize the meeting transcript for an engineering manager.
+                - generic [ref=e147]: "Checklist:"
+                - generic [ref=e148]: "- Decisions made"
+                - generic [ref=e149]: "- Open questions"
+                - generic [ref=e150]: "- Risks"
+                - generic [ref=e151]: "- Action items with owners if mentioned"
+                - generic [ref=e152]: "- Keep names exactly as written in the transcript"
+                - generic [ref=e154]: "Return JSON with keys:"
+                - generic [ref=e155]: decisions, open_questions, risks, action_items
+            - paragraph [ref=e156]: That checklist changes the output quality because it gives the model a review loop before it answers.
+            - heading "Few-shot prompting" [level=2] [ref=e157]
+            - paragraph [ref=e158]: Few-shot prompting adds examples. This is powerful when the model can perform the task in general, but you want it to follow a specific pattern. Examples are often better than long explanations because they show the model what a correct mapping looks like.
+            - paragraph [ref=e159]: Suppose you want the model to classify support tickets.
+            - figure [ref=e160]:
+              - code [ref=e162]:
+                - generic [ref=e163]: "Classify each customer message into one of these labels:"
+                - generic [ref=e164]: "- billing"
+                - generic [ref=e165]: "- bug"
+                - generic [ref=e166]: "- feature_request"
+                - generic [ref=e167]: "- account_access"
+                - generic [ref=e169]: "Examples:"
+                - generic [ref=e170]: "Message: \"I was charged twice for the same month.\""
+                - generic [ref=e171]: "Label: billing"
+                - generic [ref=e173]: "Message: \"The export button spins forever and never downloads the CSV.\""
+                - generic [ref=e174]: "Label: bug"
+                - generic [ref=e176]: "Message: \"Can you add SAML login support for Okta?\""
+                - generic [ref=e177]: "Label: feature_request"
+                - generic [ref=e179]: "Message: \"I can't sign in because the password reset email never arrives.\""
+                - generic [ref=e180]: "Label: account_access"
+                - generic [ref=e182]: "Now classify:"
+                - generic [ref=e183]: "\"I changed my password yesterday and now my login code does not work.\""
+            - paragraph [ref=e184]: The examples do three things at once. They define the labels, show the writing style you expect, and disambiguate edge cases. That is why few-shot prompting often outperforms a purely verbal explanation.
+            - paragraph [ref=e185]: "A few practical rules:"
+            - list [ref=e186]:
+              - listitem [ref=e187]: Keep examples high quality. The model will copy their structure and mistakes.
+              - listitem [ref=e188]: Match the real distribution. Do not only show easy cases.
+              - listitem [ref=e189]: Include the tricky edge case if one label is commonly confused with another.
+              - listitem [ref=e190]: Keep the schema stable. If examples vary too much, the model will generalize poorly.
+            - paragraph [ref=e191]: "Few-shot prompting also works well for extraction tasks:"
+            - figure [ref=e192]:
+              - code [ref=e194]:
+                - generic [ref=e195]: Extract structured project risks.
+                - generic [ref=e197]: "Example input:"
+                - generic [ref=e198]: "\"The vendor API rate limits us at peak traffic, and the retry logic is still incomplete.\""
+                - generic [ref=e200]: "Example output:"
+                - generic [ref=e201]: "{"
+                - generic [ref=e202]: "\"risk\": \"Vendor API rate limiting during peak traffic\","
+                - generic [ref=e203]: "\"impact\": \"Requests may fail or degrade user experience\","
+                - generic [ref=e204]: "\"mitigation\": \"Finish retry logic and add queue-based smoothing\""
+                - generic [ref=e205]: "}"
+                - generic [ref=e207]: "Now extract from:"
+                - generic [ref=e208]: "\"The team depends on one senior engineer for the migration, and the cutover runbook is not finalized.\""
+            - paragraph [ref=e209]: In many product flows, a small handful of well-chosen examples is all you need to turn an inconsistent prompt into a dependable one.
+            - heading "Chain-of-thought" [level=2] [ref=e210]
+            - paragraph [ref=e211]: Chain-of-thought prompting refers to giving the model a reasoning process or asking it to work through intermediate steps. The key idea is not that hidden reasoning is magical. It is that complex tasks improve when the model decomposes them.
+            - paragraph [ref=e212]: "For production systems, the safest habit is to ask for useful intermediate artifacts rather than vague \"think harder\" language. For example:"
+            - figure [ref=e213]:
+              - code [ref=e215]:
+                - generic [ref=e216]: You are reviewing a product requirement document.
+                - generic [ref=e218]: "Task:"
+                - generic [ref=e219]: Identify implementation risks.
+                - generic [ref=e221]: "Process:"
+                - generic [ref=e222]: 1. Extract assumptions the document makes.
+                - generic [ref=e223]: 2. For each assumption, ask what could fail in production.
+                - generic [ref=e224]: 3. Group risks into technical, operational, and adoption risks.
+                - generic [ref=e225]: 4. Return the top 5 risks by severity.
+                - generic [ref=e227]: "Output format:"
+                - generic [ref=e228]: "- Risk"
+                - generic [ref=e229]: "- Why it matters"
+                - generic [ref=e230]: "- Severity (low/medium/high)"
+                - generic [ref=e231]: "- Recommended mitigation"
+            - paragraph [ref=e232]: This is better than simply saying "reason step by step" because it guides the model toward a specific decomposition relevant to the problem.
+            - paragraph [ref=e233]: "Another example for debugging:"
+            - figure [ref=e234]:
+              - code [ref=e236]:
+                - generic [ref=e237]: You are a senior Python engineer.
+                - generic [ref=e239]: "Given the code and traceback below:"
+                - generic [ref=e240]: 1. Explain the root cause in one paragraph.
+                - generic [ref=e241]: 2. Show the smallest code fix.
+                - generic [ref=e242]: 3. List two follow-up checks to prevent regressions.
+                - generic [ref=e244]: Do not rewrite unrelated parts of the code.
+            - paragraph [ref=e245]: This approach makes the model first identify cause, then patch, then verify. That sequence often improves accuracy because it prevents the model from jumping straight into speculative edits.
+            - paragraph [ref=e246]: "When to use structured reasoning prompts:"
+            - list [ref=e247]:
+              - listitem [ref=e248]: Multi-step analysis.
+              - listitem [ref=e249]: Planning.
+              - listitem [ref=e250]: Debugging.
+              - listitem [ref=e251]: Tradeoff evaluation.
+              - listitem [ref=e252]: Long documents where evidence must be organized before answering.
+            - paragraph [ref=e253]: "When not to overuse them:"
+            - list [ref=e254]:
+              - listitem [ref=e255]: Simple fact lookup.
+              - listitem [ref=e256]: Lightweight rewriting.
+              - listitem [ref=e257]: Tasks where latency matters more than nuance.
+              - listitem [ref=e258]: Situations where extra steps create verbose but not better answers.
+            - paragraph [ref=e259]: "The general principle is: ask the model to produce the intermediate work product a strong human would produce."
+            - heading "System prompts" [level=2] [ref=e260]
+            - paragraph [ref=e261]: System prompts define the standing behavior of an assistant. They are especially important in applications because they establish the default rules before user input arrives.
+            - paragraph [ref=e262]: "A strong system prompt should answer:"
+            - list [ref=e263]:
+              - listitem [ref=e264]: What role should the model play?
+              - listitem [ref=e265]: What values or constraints are always in force?
+              - listitem [ref=e266]: How should it behave under ambiguity?
+              - listitem [ref=e267]: What should it do when information is missing?
+              - listitem [ref=e268]: What formats or safety boundaries must it respect?
+            - paragraph [ref=e269]: "Example system prompt for a documentation assistant:"
+            - figure [ref=e270]:
+              - code [ref=e272]:
+                - generic [ref=e273]: You are a technical documentation assistant for an AI platform.
+                - generic [ref=e275]: "Behavior rules:"
+                - generic [ref=e276]: "- Prioritize accuracy over fluency"
+                - generic [ref=e277]: "- If the answer depends on missing context, say what is missing"
+                - generic [ref=e278]: "- Prefer concise explanations first, then examples"
+                - generic [ref=e279]: "- When giving code, return complete runnable snippets"
+                - generic [ref=e280]: "- Do not invent APIs, configuration fields, or benchmark numbers"
+                - generic [ref=e282]: "Style rules:"
+                - generic [ref=e283]: "- Use clear headings"
+                - generic [ref=e284]: "- Keep paragraphs short"
+                - generic [ref=e285]: "- Explain tradeoffs when recommending an approach"
+            - paragraph [ref=e286]: Notice what this prompt does not do. It does not try to script every possible situation. It sets durable behavioral defaults. System prompts should be high leverage, not bloated.
+            - paragraph [ref=e287]: "A useful pattern is to separate permanent rules from task-specific instructions:"
+            - figure [ref=e288]:
+              - code [ref=e290]:
+                - generic [ref=e291]: "System prompt:"
+                - generic [ref=e292]: "- Be accurate"
+                - generic [ref=e293]: "- Be concise"
+                - generic [ref=e294]: "- Never fabricate citations"
+                - generic [ref=e296]: "User prompt:"
+                - generic [ref=e297]: "- Summarize this paper for ML engineers"
+                - generic [ref=e298]: "- Focus on method, results, and limitations"
+            - paragraph [ref=e299]: This separation makes your prompting stack easier to maintain. If you push everything into a giant system prompt, updates become brittle.
+            - paragraph [ref=e300]: System prompts also matter when you want the model to refuse certain actions gracefully. For example, an internal enterprise assistant might be instructed to avoid disclosing secrets, never treat user claims as verified facts, and ask for clarification when approval is needed for high-impact changes.
+            - heading "Common mistakes" [level=2] [ref=e301]
+            - paragraph [ref=e302]: The most common prompting mistake is trying to compress a fuzzy desire into one sentence and hoping the model infers the rest. Human collaborators can often reconstruct intent from context. Models cannot do that reliably.
+            - paragraph [ref=e303]: "Mistake 1: Unclear objective."
+            - figure [ref=e304]:
+              - code [ref=e306]:
+                - generic [ref=e307]: Make this better.
+            - paragraph [ref=e308]: "Better:"
+            - figure [ref=e309]:
+              - code [ref=e311]:
+                - generic [ref=e312]: Rewrite this landing page copy for technical buyers.
+                - generic [ref=e313]: "- Keep the structure"
+                - generic [ref=e314]: "- Remove hype"
+                - generic [ref=e315]: "- Clarify the product's core value in the first 2 sentences"
+                - generic [ref=e316]: "- Keep under 220 words"
+            - paragraph [ref=e317]: "Mistake 2: Asking for multiple tasks at once without priority."
+            - figure [ref=e318]:
+              - code [ref=e320]:
+                - generic [ref=e321]: Summarize this article, critique it, rewrite it for beginners, and create tweets.
+            - paragraph [ref=e322]: This leads to inconsistent attention. Break it into stages or explicitly prioritize the outputs.
+            - paragraph [ref=e323]: "Mistake 3: Vague output formatting."
+            - paragraph [ref=e324]: If you need JSON, say so. If you need bullet points, say so. If you need a table with named columns, define the columns. Do not assume the model will choose your preferred representation.
+            - paragraph [ref=e325]: "Mistake 4: Overstuffing irrelevant context."
+            - paragraph [ref=e326]: More context is not always better. Useful context narrows the task. Irrelevant context creates noise and pushes important constraints out of focus.
+            - paragraph [ref=e327]: "Mistake 5: Treating prompts as static when the task is dynamic."
+            - paragraph [ref=e328]: Real systems need prompt evaluation. If your users ask different kinds of questions, you may need routing, templates, or separate prompts rather than one universal instruction blob.
+            - paragraph [ref=e329]: "Mistake 6: Forgetting failure handling."
+            - paragraph [ref=e330]: "A good production prompt often includes instructions for uncertainty:"
+            - figure [ref=e331]:
+              - code [ref=e333]:
+                - generic [ref=e334]: "If the source text does not contain enough information to answer, say:"
+                - generic [ref=e335]: "\"Insufficient information in the provided context.\""
+                - generic [ref=e336]: Do not guess.
+            - paragraph [ref=e337]: This single rule can prevent a large amount of low-confidence fabrication.
+            - heading "Best practices" [level=2] [ref=e338]
+            - paragraph [ref=e339]: The best prompt engineers think like product designers and test engineers. They do not ask only, "Does this prompt sound good?" They ask, "What failure mode am I preventing?"
+            - paragraph [ref=e340]: Here are practical best practices that hold up well in real systems.
+            - paragraph [ref=e341]: Start with a narrow objective. If the model output will be used by downstream code or shown to users, define a single job first. Monolithic prompts create coupling between unrelated behaviors.
+            - paragraph [ref=e342]: Specify the audience. "Explain to a CFO" and "explain to an ML engineer" are not stylistic variants. They imply different abstractions, jargon tolerance, and evidence expectations.
+            - paragraph [ref=e343]: Define a concrete output shape. A model should not be deciding whether your result is prose, bullets, JSON, or a comparison table. Make that choice yourself.
+            - paragraph [ref=e344]: Use delimiters for inputs. This reduces confusion between instructions and content.
+            - figure [ref=e345]:
+              - code [ref=e347]:
+                - generic [ref=e348]: Summarize the following customer interview.
+                - generic [ref=e350]: <transcript>
+                - generic [ref=e351]: ...content...
+                - generic [ref=e352]: </transcript>
+            - paragraph [ref=e353]: Ask for groundedness where possible. If you provide source material, tell the model to stay within it.
+            - figure [ref=e354]:
+              - code [ref=e356]:
+                - generic [ref=e357]: Answer only using the context below.
+                - generic [ref=e358]: If the answer is not in the context, say that it is not stated.
+            - paragraph [ref=e359]: Constrain length intentionally. If you want an executive summary, say 5 bullets. If you want depth, say 800 words with section headings. Length is part of task design.
+            - paragraph [ref=e360]: "Prefer iterative prompting for complex work. A good workflow is often:"
+            - list [ref=e361]:
+              - listitem [ref=e362]: Ask the model to extract facts.
+              - listitem [ref=e363]: Ask it to organize those facts.
+              - listitem [ref=e364]: Ask it to produce the final artifact.
+            - paragraph [ref=e365]: That staged flow is easier to debug than one giant prompt because you can see where quality drops.
+            - paragraph [ref=e366]: Build evaluation examples. The moment a prompt matters to your product or team, create a small test set of representative inputs and expected behaviors. Prompting becomes engineering when you can compare revisions against known cases.
+            - paragraph [ref=e367]: Finally, remember that prompt engineering is not a replacement for system design. If you need strict correctness, long-term memory, tool use, retrieval, or deterministic validation, you should combine prompts with architecture. Prompting is the policy layer, not the whole stack.
+            - paragraph [ref=e368]: "Here is one production-grade pattern that works surprisingly well:"
+            - figure [ref=e369]:
+              - code [ref=e371]:
+                - generic [ref=e372]: You are an AI assistant helping with support triage.
+                - generic [ref=e374]: "Task:"
+                - generic [ref=e375]: Classify the request and draft a response.
+                - generic [ref=e377]: "Context:"
+                - generic [ref=e378]: "- Use only the policy excerpts provided below"
+                - generic [ref=e379]: "- Audience is end users, not internal staff"
+                - generic [ref=e381]: "Required process:"
+                - generic [ref=e382]: 1. Identify the user's primary issue
+                - generic [ref=e383]: 2. Determine whether the policy explicitly addresses it
+                - generic [ref=e384]: 3. If yes, answer clearly and cite the policy section title
+                - generic [ref=e385]: 4. If not, say the issue requires human review
+                - generic [ref=e387]: "Output JSON:"
+                - generic [ref=e388]: "{"
+                - generic [ref=e389]: "\"category\": \"\","
+                - generic [ref=e390]: "\"policy_supported\": true,"
+                - generic [ref=e391]: "\"response\": \"\","
+                - generic [ref=e392]: "\"policy_section\": \"\""
+                - generic [ref=e393]: "}"
+            - paragraph [ref=e394]: It works because it combines role, grounding, process, and format in a compact form.
+            - paragraph [ref=e395]: Prompt engineering in 2025 is less about clever wording and more about operational clarity. Strong prompts reduce ambiguity, expose intent, and create outputs you can trust. If you keep that principle in view, you will write prompts that survive model changes and scale into real products.
+          - generic [ref=e396]:
+            - paragraph [ref=e397]: Next article
+            - link "How to build a RAG system from scratch" [ref=e398] [cursor=pointer]:
+              - /url: /guides/how-to-build-rag
+            - paragraph [ref=e399]: A practical blueprint for building retrieval-augmented generation systems, from chunking and embeddings to evaluation and production tradeoffs.
+    - contentinfo [ref=e411]:
+      - generic [ref=e412]:
+        - generic [ref=e413]:
+          - paragraph [ref=e414]: Knovo
+          - paragraph [ref=e415]: The world's most complete AI knowledge hub for builders who want depth, clarity, and practical guidance.
+        - generic [ref=e416]:
+          - paragraph [ref=e417]: Explore
+          - generic [ref=e418]:
+            - link "Guides" [ref=e419] [cursor=pointer]:
+              - /url: /guides
+            - link "Tools" [ref=e420] [cursor=pointer]:
+              - /url: "#"
+            - link "Community" [ref=e421] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=e422]:
+          - paragraph [ref=e423]: Company
+          - generic [ref=e424]:
+            - link "About" [ref=e425] [cursor=pointer]:
+              - /url: /about
+            - link "Latest guides" [ref=e426] [cursor=pointer]:
+              - /url: /guides
+        - generic [ref=e427]:
+          - paragraph [ref=e428]: Tagline
+          - paragraph [ref=e429]: The world's most complete AI knowledge hub.
+  - alert [ref=e430]
+  - button "Open Next.js Dev Tools" [ref=e436] [cursor=pointer]:
+    - img [ref=e437]

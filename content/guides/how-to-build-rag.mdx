@@ -1,0 +1,386 @@
+---
+title: "How to build a RAG system from scratch"
+description: "A practical blueprint for building retrieval-augmented generation systems, from chunking and embeddings to evaluation and production tradeoffs."
+date: "2025-10-04"
+lastVerified: "2026-03-18"
+readTime: "20 min read"
+author: "Knovo Team"
+tags:
+  - RAG
+  - Retrieval
+  - LLM Systems
+featured: true
+---
+
+Retrieval-augmented generation, usually shortened to RAG, is the most common way to make language models useful with private, fast-changing, or domain-specific knowledge. Instead of asking a model to answer from parameters alone, you retrieve relevant context at request time and provide it to the model before generation.
+
+That sounds simple, but production RAG is not just "put PDFs in a vector database." The quality of the system depends on choices you make at every layer: how documents are cleaned, how chunks are created, how queries are rewritten, how relevance is scored, how context is packed, and how answers are evaluated.
+
+This guide walks through the full pipeline and gives you concrete implementation patterns in Python.
+
+## What is RAG
+
+RAG combines information retrieval with language generation. The high-level flow looks like this:
+
+1. Ingest source documents.
+2. Break them into chunks.
+3. Convert chunks into embeddings.
+4. Store embeddings and metadata in an index or vector database.
+5. At query time, retrieve the most relevant chunks.
+6. Build a prompt with the retrieved context.
+7. Ask the model to answer using that context.
+
+The value of this architecture is that knowledge lives outside the model. That gives you three major advantages:
+
+1. You can update knowledge without retraining.
+2. You can ground answers in source material.
+3. You can scope answers to a user, tenant, or repository.
+
+RAG is especially strong when facts change often, documents are proprietary, or users need citations. It is less effective when the question requires deep reasoning over very large bodies of evidence that cannot fit into the available context window. In those cases, you often need multi-step retrieval, planning, or tools in addition to basic RAG.
+
+## Architecture overview
+
+A clean RAG architecture has two pipelines: indexing and serving.
+
+Indexing pipeline:
+
+1. Load documents from files, APIs, or databases.
+2. Normalize and clean text.
+3. Split into chunks.
+4. Attach metadata such as title, URL, section, date, tenant, and permissions.
+5. Embed chunks.
+6. Store vectors and metadata.
+
+Serving pipeline:
+
+1. Receive user question.
+2. Optionally rewrite or expand the query.
+3. Retrieve candidate chunks.
+4. Rerank candidates if needed.
+5. Pack the best context into the prompt.
+6. Generate answer.
+7. Return answer with sources.
+
+Here is a minimal mental model in code:
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Chunk:
+    id: str
+    text: str
+    metadata: dict
+    embedding: list[float] | None = None
+
+
+def answer_question(question: str) -> dict:
+    query_embedding = embed_text(question)
+    candidates = vector_search(query_embedding, top_k=8)
+    reranked = rerank(question, candidates)
+    context = build_context(reranked[:4])
+    prompt = make_prompt(question, context)
+    answer = generate(prompt)
+    return {
+        "answer": answer,
+        "sources": [c.metadata for c in reranked[:4]],
+    }
+```
+
+The exact tools will change across stacks, but this architecture is stable.
+
+## Chunking strategies
+
+Chunking is where many RAG systems quietly fail. If chunks are too small, you lose context and coherence. If they are too large, retrieval becomes blurry and expensive. Good chunking preserves semantic meaning while staying small enough for precise retrieval.
+
+The simplest approach is fixed-size chunking by characters or tokens with overlap.
+
+```python
+def chunk_text(text: str, chunk_size: int = 800, overlap: int = 120) -> list[str]:
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start += chunk_size - overlap
+    return chunks
+```
+
+This baseline is easy to build, but it cuts across paragraphs and headings. A better production strategy is structure-aware chunking:
+
+1. Split by headings first.
+2. Preserve lists and tables where possible.
+3. Keep paragraph groups together.
+4. Add overlap only when a section exceeds the target size.
+
+For documentation and knowledge bases, a hybrid strategy works well:
+
+```python
+import re
+
+def split_by_headings(markdown: str) -> list[tuple[str, str]]:
+    sections = re.split(r"(?m)^##\s+", markdown)
+    results = []
+    for section in sections:
+        if not section.strip():
+            continue
+        lines = section.splitlines()
+        title = lines[0].strip()
+        body = "\n".join(lines[1:]).strip()
+        results.append((title, body))
+    return results
+```
+
+The point is not to worship any one chunk size. The point is to preserve the unit of meaning that users are likely to ask about.
+
+Chunking decisions should reflect your content:
+
+1. API docs benefit from heading-based chunks with endpoint metadata.
+2. Support articles benefit from section chunks that preserve step sequences.
+3. Legal or policy text may need smaller chunks plus citations to paragraph numbers.
+4. Code repositories often need file-aware chunking and symbols.
+
+You should also store helpful metadata per chunk:
+
+```python
+chunk = {
+    "id": "docs/rag/intro#chunk-2",
+    "text": "...",
+    "metadata": {
+        "title": "RAG introduction",
+        "section": "Chunking strategies",
+        "url": "/docs/rag",
+        "version": "2025-10",
+        "tenant_id": "acme",
+    }
+}
+```
+
+Metadata is what makes filtering, authorization, and citations possible later.
+
+## Embedding models
+
+An embedding model converts text into vectors that capture semantic similarity. At retrieval time, the system compares the query vector to chunk vectors and returns the closest matches.
+
+When choosing an embedding model, focus on:
+
+1. Retrieval quality on your domain.
+2. Dimensionality and storage cost.
+3. Latency and throughput.
+4. Language support.
+5. Stability across updates.
+
+You do not need the biggest model to get strong retrieval. You need the one that separates relevant from irrelevant passages for your actual data.
+
+Here is a simple abstraction:
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+
+def embed_text(text: str) -> list[float]:
+    response = client.embeddings.create(
+        model="text-embedding-3-large",
+        input=text,
+    )
+    return response.data[0].embedding
+```
+
+If you batch indexing jobs, make sure you use batching to improve throughput:
+
+```python
+def embed_batch(texts: list[str]) -> list[list[float]]:
+    response = client.embeddings.create(
+        model="text-embedding-3-large",
+        input=texts,
+    )
+    return [item.embedding for item in response.data]
+```
+
+Evaluate embeddings on your own corpus. A model that performs well on a public benchmark may still underperform on terse support tickets, dense research notes, or multilingual internal docs. Retrieval is domain shaped.
+
+## Vector databases
+
+Vector databases store embeddings and allow nearest-neighbor search. Popular choices differ in ergonomics, filtering support, scale, and operational complexity, but the functional requirements are similar:
+
+1. Upserts for new or changed chunks.
+2. Metadata filtering.
+3. Fast top-k search.
+4. Namespaces or multitenancy support.
+5. Good operational tooling.
+
+The storage abstraction can be simple:
+
+```python
+class VectorStore:
+    def upsert(self, items: list[dict]) -> None:
+        raise NotImplementedError
+
+    def search(self, query_vector: list[float], top_k: int, filters: dict | None = None) -> list[dict]:
+        raise NotImplementedError
+```
+
+A pseudo-implementation using metadata filtering:
+
+```python
+def retrieve(query: str, tenant_id: str) -> list[dict]:
+    vector = embed_text(query)
+    return store.search(
+        query_vector=vector,
+        top_k=10,
+        filters={"tenant_id": tenant_id, "published": True},
+    )
+```
+
+Filtering matters as much as similarity. If users should only see documents from their workspace, authorization must happen during retrieval, not after generation.
+
+You should also think about freshness. In production systems, documents change. Your index needs a way to re-embed only changed content, delete removed chunks, and keep metadata consistent. Incremental indexing is not optional once the corpus grows.
+
+## Retrieval
+
+Basic vector retrieval is often enough for a prototype. Production systems usually need more than one retrieval tactic because queries vary in form.
+
+Common improvements include:
+
+1. Query rewriting: turn a vague user question into a clearer search query.
+2. Hybrid search: combine vector similarity with keyword retrieval.
+3. Metadata filtering: narrow by product, date, tenant, or document type.
+4. Multi-query retrieval: generate alternate phrasings and merge results.
+5. Reranking: score candidates with a stronger model before prompt assembly.
+
+A simple query rewriting step:
+
+```python
+def rewrite_query(question: str) -> str:
+    prompt = f"""
+    Rewrite the user's question into a concise retrieval query.
+    Preserve meaning. Add key technical terms if they are implied.
+    Question: {question}
+    """
+    return generate(prompt).strip()
+```
+
+You can also merge vector and keyword scores:
+
+```python
+def hybrid_retrieve(question: str) -> list[dict]:
+    dense = dense_search(question, top_k=20)
+    sparse = keyword_search(question, top_k=20)
+    return fuse_results([dense, sparse])
+```
+
+Why does hybrid search help? Because some questions hinge on exact tokens such as error codes, table names, product SKUs, or regulatory phrases. Pure vector similarity can miss those. Sparse retrieval catches them.
+
+Reranking is one of the highest ROI upgrades in RAG. Instead of trusting the initial nearest-neighbor order, you pass the top candidates to a reranker that scores relevance with respect to the actual question.
+
+```python
+def rerank(question: str, candidates: list[dict]) -> list[dict]:
+    scored = []
+    for candidate in candidates:
+        score = relevance_model(question, candidate["text"])
+        scored.append((score, candidate))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [item for _, item in scored]
+```
+
+The reason reranking works is that approximate nearest-neighbor search optimizes for fast similarity, not task-specific relevance.
+
+## Generation
+
+Once you have good chunks, generation should be constrained and grounded. The model should know that retrieved context is the source of truth.
+
+Here is a robust answer prompt:
+
+```python
+def make_prompt(question: str, context: str) -> str:
+    return f"""
+You are a helpful AI assistant answering questions from a knowledge base.
+
+Rules:
+- Answer using only the provided context
+- If the answer is not stated in the context, say you do not have enough information
+- Be concise but complete
+- Cite the source IDs you used at the end
+
+Question:
+{question}
+
+Context:
+{context}
+"""
+```
+
+And a context builder:
+
+```python
+def build_context(chunks: list[dict]) -> str:
+    parts = []
+    for chunk in chunks:
+        parts.append(
+            f"[source_id: {chunk['id']}]\n"
+            f"title: {chunk['metadata'].get('title')}\n"
+            f"text: {chunk['text']}\n"
+        )
+    return "\n---\n".join(parts)
+```
+
+The best generation prompts do not ask the model to do everything at once. They define the scope of authority. The model is allowed to synthesize and explain, but not to invent missing facts.
+
+You should also think about context packing. If you retrieve 12 chunks but only 4 are actually central, stuffing all 12 into the prompt can make the answer worse. Context quality beats context volume.
+
+## Evaluation
+
+If you do not evaluate RAG systematically, you will not know whether failures come from retrieval, prompting, generation, or the source documents. Evaluation is what turns a demo into an engineering system.
+
+At minimum, create a small labeled set of questions with expected answers or relevant source chunks. Then measure:
+
+1. Retrieval recall: did the system retrieve a chunk that contained the answer?
+2. Precision at k: how many retrieved chunks were actually relevant?
+3. Answer groundedness: does the answer stay within the provided context?
+4. Answer correctness: is the final answer right?
+5. Citation quality: are the cited chunks actually supportive?
+
+Example evaluation loop:
+
+```python
+def evaluate(dataset: list[dict]) -> list[dict]:
+    results = []
+    for row in dataset:
+        retrieved = retrieve(row["question"], tenant_id=row["tenant_id"])
+        hit = any(chunk["id"] in row["expected_chunk_ids"] for chunk in retrieved[:5])
+        prompt = make_prompt(row["question"], build_context(retrieved[:4]))
+        answer = generate(prompt)
+        results.append({
+            "question": row["question"],
+            "retrieval_hit_at_5": hit,
+            "answer": answer,
+        })
+    return results
+```
+
+For early-stage systems, even a spreadsheet-based evaluation set is enough. The important part is to label representative failures:
+
+1. Missed retrieval because chunking was bad.
+2. Wrong retrieval because embeddings were weak.
+3. Good retrieval but weak prompt grounding.
+4. Good retrieval and prompt, but the answer still overreached.
+5. The source docs themselves were incomplete.
+
+Once you classify failures, improvements become much more targeted.
+
+## Production guidance
+
+A few production lessons matter more than most architectural debates.
+
+First, retrieval quality dominates. Teams often spend too much time changing generation prompts when the real problem is that the right evidence never reached the model.
+
+Second, metadata and permissions are core features, not cleanup work. A system that retrieves the wrong tenant's content is not a mildly bad RAG system. It is a security incident.
+
+Third, citations dramatically improve trust and debugging. Even if users do not inspect them often, your team will use them to understand failures.
+
+Fourth, index freshness needs ownership. Decide how new content enters the system, how updates are detected, and what triggers re-embedding. If no one owns freshness, the knowledge hub slowly decays.
+
+Finally, keep the architecture observable. Log query rewrites, retrieved chunk IDs, final prompt size, answer latency, and user feedback. RAG is much easier to improve when you can see each stage of the pipeline.
+
+RAG from scratch is not complicated because any one piece is hard. It is complicated because the pieces interact. Chunking affects retrieval. Retrieval affects grounding. Grounding affects answer quality. Evaluation is what keeps those interactions visible. If you build with that full loop in mind, your RAG system will grow from a prototype into a dependable product.

@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 40%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 238 84% 61%;
+}
+
+.dark {
+  --background: 222 47% 7%;
+  --foreground: 210 40% 96%;
+  --muted: 222 24% 14%;
+  --muted-foreground: 215 20% 70%;
+  --card: 222 34% 9%;
+  --card-foreground: 210 40% 96%;
+  --border: 222 18% 18%;
+  --input: 222 18% 18%;
+  --ring: 238 84% 61%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(79, 70, 229, 0.08), transparent 28%),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+::selection {
+  background: rgba(79, 70, 229, 0.18);
+}
+
+[data-rehype-pretty-code-figure] {
+  @apply my-6 overflow-hidden rounded-xl border border-border bg-slate-950/95 shadow-soft;
+}
+
+[data-rehype-pretty-code-title] {
+  @apply border-b border-white/10 px-4 py-2 text-xs font-medium text-slate-300;
+}
+
+[data-rehype-pretty-code-figure] pre {
+  @apply overflow-x-auto bg-transparent px-4 py-4 text-sm leading-6;
+}
+
+[data-rehype-pretty-code-figure] code {
+  @apply font-mono;
+}
+
+.prose :where(h2, h3, h4) {
+  scroll-margin-top: 96px;
+}
+
+.prose :not(pre) > code {
+  @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.9em];
+}
