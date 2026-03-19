@@ -12,7 +12,7 @@ updateFrequency: "monthly"
 
 This guide is updated monthly. Pricing and model behavior can change quickly, so always re-check vendor pricing pages before locking production budgets.
 
-## 1. The AI model landscape in 2026 "” what changed (200 words)
+## 1. The AI model landscape in 2026 — what changed (200 words)
 
 The model market in 2026 looks very different from 2024 and early 2025. The biggest change is not only "which model is smartest," but how strongly providers now segment models by workload: flagship intelligence, high-throughput mini tiers, and ultra-low-cost nano or flash-lite tiers. Teams no longer choose one model for everything. They route tasks dynamically by complexity, latency target, and budget.
 
@@ -24,7 +24,7 @@ Finally, product retirements accelerated. In ChatGPT, GPT-4o and GPT-4.1 were re
 
 Bottom line: the best strategy in 2026 is a portfolio mindset, not single-model loyalty.
 
-## 2. Quick comparison table "” all major models, pricing, context window, best for
+## 2. Quick comparison table — all major models, pricing, context window, best for
 
 Pricing below is based on official vendor docs/pages as of March 2026. For OpenAI, check the official pricing page for latest rates.
 
@@ -35,7 +35,7 @@ Pricing below is based on official vendor docs/pages as of March 2026. For OpenA
 | GPT-5.4 nano (OpenAI) | $0.20 | $1.25 | 400,000 | Classification, extraction, ranking, high-volume simple tasks |
 | Claude Opus 4.6 (Anthropic) | $5.00 | $25.00 | 1M | Most complex coding/agent problems where quality is the top priority |
 | Claude Sonnet 4.6 (Anthropic) | $3.00 | $15.00 | 1M | Balanced speed/intelligence for production assistants |
-| Gemini 3.1 Pro Preview (Google) | $2.00 (<=200k prompts), $4.00 (>200k) | $12.00 (<=200k), $18.00 (>200k) | 1,048,576 | Multimodal + tool-grounded workflows with large context |
+| Gemini 3.1 Pro Preview (Google) | $2.00 (`<=200k` prompts), $4.00 (`>200k`) | $12.00 (`<=200k`), $18.00 (`>200k`) | 1,048,576 | Multimodal + tool-grounded workflows with large context |
 | Gemini 3.1 Flash-Lite Preview (Google) | $0.25 (text/image/video) | $1.50 | 1,048,576 | Cheapest high-volume translation/extraction/light agents |
 
 Important caveats:
@@ -44,7 +44,7 @@ Important caveats:
 2. Gemini 3.1 Pro pricing is tiered by prompt length; using only one number can misestimate spend.
 3. Anthropic and Google pricing can differ on third-party platforms.
 
-## 3. GPT-5.4 deep dive "” strengths, weaknesses, pricing, best use cases (400 words)
+## 3. GPT-5.4 deep dive — strengths, weaknesses, pricing, best use cases (400 words)
 
 GPT-5.4 is OpenAI's flagship model for complex professional work. In practice, it is strongest when tasks require sustained reasoning quality across long, multi-step chains: architecture decisions, difficult debugging, deep synthesis across many sources, and agentic execution where reliability matters more than raw speed.
 
@@ -91,7 +91,7 @@ Recommended strategy:
 
 In short, GPT-5.4 is a top-tier model when correctness and depth are core requirements. But its value comes from selective deployment, not blanket usage.
 
-## 4. Claude Sonnet 4.6 deep dive "” strengths, weaknesses, pricing, best use cases (400 words)
+## 4. Claude Sonnet 4.6 deep dive — strengths, weaknesses, pricing, best use cases (400 words)
 
 Claude Sonnet 4.6 is Anthropic's "best combination of speed and intelligence" model, and that description matches real deployment behavior for many teams. It is often a strong default for production assistants where you need high quality without paying Opus-level pricing on every request.
 
@@ -137,7 +137,7 @@ For teams migrating from older Claude generations, Sonnet 4.6 often provides a c
 
 Honest summary: Sonnet 4.6 is one of the strongest "default production" choices in 2026 if your workload is mixed and you want a quality-first model without immediately paying for the highest tier on every call.
 
-## 5. Gemini 3.1 Pro deep dive "” strengths, weaknesses, pricing, best use cases (400 words)
+## 5. Gemini 3.1 Pro deep dive — strengths, weaknesses, pricing, best use cases (400 words)
 
 Gemini 3.1 Pro Preview is Google's flagship-tier model in this comparison, designed for high-performance multimodal and agentic workflows. It combines a large context window (1,048,576), tool support, and strong emphasis on grounded execution.
 
@@ -150,8 +150,8 @@ Core strengths:
 
 Official pricing (Gemini Developer API docs, March 2026) is tiered:
 
-1. Input: $2.00 / 1M for prompts <=200k tokens, $4.00 / 1M for >200k.
-2. Output: $12.00 / 1M for prompts <=200k, $18.00 / 1M for >200k.
+1. Input: $2.00 / 1M for prompts `<=200k` tokens, $4.00 / 1M for `>200k`.
+2. Output: $12.00 / 1M for prompts `<=200k`, $18.00 / 1M for `>200k`.
 
 If you only quote one number, you can miss real costs by a large margin. For many "standard-length" requests, output is $12, not $18. For very long prompts, $18 is the relevant figure.
 
@@ -172,11 +172,11 @@ How to deploy it well:
 
 1. Route large, multimodal, tool-grounded requests to Gemini 3.1 Pro.
 2. Route high-volume simple tasks to Gemini 3.1 Flash-Lite.
-3. Track prompt-length distribution so you can estimate how often >200k pricing applies.
+3. Track prompt-length distribution so you can estimate how often `>200k` pricing applies.
 
 Honest summary: Gemini 3.1 Pro is a serious flagship option in 2026, particularly for multimodal and grounded-agent systems. It can be both powerful and cost-effective when routed carefully, but only if you account for its prompt-length price tiers.
 
-## 6. Head-to-head: coding tasks "” which model wins (300 words)
+## 6. Head-to-head: coding tasks — which model wins (300 words)
 
 For coding work, there is no universal winner across all sub-tasks. The result depends on whether you care most about difficult architecture-level reasoning, fast iterative patching, or cost-efficient large-scale code assistance.
 
@@ -214,7 +214,7 @@ Practical winner framework:
 
 So "who wins coding" is really "which coding layer are you optimizing?" Flagships win quality ceilings. Smaller tiers win volume economics.
 
-## 7. Head-to-head: reasoning and analysis "” which model wins (300 words)
+## 7. Head-to-head: reasoning and analysis — which model wins (300 words)
 
 Reasoning performance depends on depth, stability, and how well the model handles constraints over long contexts. In 2026, GPT-5.4, Claude Opus 4.6, Claude Sonnet 4.6, and Gemini 3.1 Pro are all strong, but each has a different center of gravity.
 
@@ -252,7 +252,7 @@ Important caveat:
 
 Honest conclusion: there is no single reasoning champion for every business context. The best model is the one that gives stable, correct answers on your real tasks at acceptable latency and cost.
 
-## 8. Head-to-head: cost efficiency "” which model wins (300 words)
+## 8. Head-to-head: cost efficiency — which model wins (300 words)
 
 If cost efficiency means "lowest dollars per successful task," the winner is often not the model with the lowest token price. It is the model that minimizes retries, bad outputs, and manual correction.
 
@@ -265,7 +265,7 @@ Still, raw pricing gives a first signal:
 
 Gemini 3.1 Pro caveat:
 
-1. Input/output pricing changes by prompt length (<=200k vs >200k), so blended cost depends on workload shape.
+1. Input/output pricing changes by prompt length (`<=200k` vs `>200k`), so blended cost depends on workload shape.
 
 Claude Sonnet 4.6 vs GPT-5.4 mini:
 
@@ -335,7 +335,7 @@ Step 5: Re-evaluate monthly.
 
 Remember the February 13, 2026 ChatGPT retirements (including GPT-4o and GPT-4.1) as a planning signal: model lifecycle risk is real. Build migration agility into your stack from day one.
 
-## 10. The verdict "” our honest recommendation (200 words)
+## 10. The verdict — our honest recommendation (200 words)
 
 If you need one practical recommendation for March 2026, use a tiered stack:
 
