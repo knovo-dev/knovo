@@ -4,6 +4,7 @@ import "./globals.css";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { Providers } from "@/app/providers";
+import { PostHogPageView } from "@/app/posthog-page-view";
 import { createMetadata } from "@/lib/seo";
 
 const inter = Inter({
@@ -42,6 +43,7 @@ export default function RootLayout({
         className={`${inter.variable} ${geistMono.variable} min-h-screen font-sans antialiased`}
       >
         <Providers>
+          <PostHogPageView />
           <div className="relative flex min-h-screen flex-col">
             <Navbar />
             <main className="flex-1">{children}</main>
