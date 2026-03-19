@@ -65,6 +65,28 @@ function readGuideFile(slug: string) {
   return fs.readFileSync(path.join(guidesDirectory, `${slug}.mdx`), "utf8");
 }
 
+function toDateString(value: unknown) {
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  return String(value ?? "");
+}
+
+function normalizeGuideFrontmatter(data: Record<string, unknown>): GuideFrontmatter {
+  return {
+    title: String(data.title ?? ""),
+    description: String(data.description ?? ""),
+    date: toDateString(data.date),
+    lastVerified: toDateString(data.lastVerified),
+    readTime: String(data.readTime ?? ""),
+    author: String(data.author ?? ""),
+    tags: Array.isArray(data.tags) ? data.tags.map((tag) => String(tag)) : [],
+    featured: Boolean(data.featured),
+    updatedMonthly:
+      typeof data.updatedMonthly === "boolean" ? data.updatedMonthly : undefined,
+  };
+}
+
 export function getGuideSlugs() {
   return fs
     .readdirSync(guidesDirectory)
@@ -77,12 +99,13 @@ export function getGuides(): Guide[] {
     .map((slug) => {
       const file = readGuideFile(slug);
       const { data, content } = matter(file);
+      const normalizedData = normalizeGuideFrontmatter(data as Record<string, unknown>);
 
       return {
         slug,
         content,
         headings: extractHeadings(content),
-        ...(data as GuideFrontmatter),
+        ...normalizedData,
       };
     })
     .sort((a, b) => +new Date(b.date) - +new Date(a.date));
@@ -95,12 +118,13 @@ export function getFeaturedGuides() {
 export function getGuideBySlug(slug: string) {
   const file = readGuideFile(slug);
   const { data, content } = matter(file);
+  const normalizedData = normalizeGuideFrontmatter(data as Record<string, unknown>);
 
   return {
     slug,
     content,
     headings: extractHeadings(content),
-    ...(data as GuideFrontmatter),
+    ...normalizedData,
   } satisfies Guide;
 }
 
