@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const siteUrl = "https://knovo.ai";
+const siteUrl = "https://www.knovo.dev";
 
 export const siteConfig = {
   name: "Knovo",
