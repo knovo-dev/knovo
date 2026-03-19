@@ -1,386 +1,873 @@
 ---
-title: "How to build a RAG system from scratch"
-description: "A practical blueprint for building retrieval-augmented generation systems, from chunking and embeddings to evaluation and production tradeoffs."
-date: "2025-10-04"
-lastVerified: "2026-03-18"
+title: "How to build a RAG system from scratch (2026 guide)"
+description: "A complete, practical guide to building production-ready RAG systems. Covers chunking, embeddings, vector databases, retrieval, and evaluation with working Python code."
+date: 2026-03-19
+lastVerified: 2026-03-19
 readTime: "20 min read"
 author: "Knovo Team"
-tags:
-  - RAG
-  - Retrieval
-  - LLM Systems
+tags: ["RAG", "retrieval augmented generation", "LangChain", "vector database", "AI engineering"]
 featured: true
 ---
 
-Retrieval-augmented generation, usually shortened to RAG, is the most common way to make language models useful with private, fast-changing, or domain-specific knowledge. Instead of asking a model to answer from parameters alone, you retrieve relevant context at request time and provide it to the model before generation.
+RAG in 2026 is no longer a demo pattern. It is core infrastructure for assistants, internal copilots, search-augmented workflows, and agent systems. This guide is designed to be implementation-first: clear architecture, practical tradeoffs, and code you can run with minimal adaptation.
 
-That sounds simple, but production RAG is not just "put PDFs in a vector database." The quality of the system depends on choices you make at every layer: how documents are cleaned, how chunks are created, how queries are rewritten, how relevance is scored, how context is packed, and how answers are evaluated.
+## 1. What is RAG and why it matters (200 words)
 
-This guide walks through the full pipeline and gives you concrete implementation patterns in Python.
+Retrieval-Augmented Generation (RAG) is a pattern where a language model answers questions using external knowledge retrieved at runtime. Instead of relying only on model memory, you search your own corpus, pass relevant chunks to the model, and generate a grounded response. That single design decision changes everything: you can update knowledge without fine-tuning, cite sources, enforce data boundaries, and improve trust.
 
-## What is RAG
+RAG matters because real production data is dynamic and specific. Product docs change weekly, support policies change monthly, and internal systems are not in public model training data. If your assistant answers from stale memory, user trust collapses quickly. RAG gives you freshness and control.
 
-RAG combines information retrieval with language generation. The high-level flow looks like this:
+RAG also matters for cost and safety. Fine-tuning every small update is expensive and operationally heavy. A retrieval layer is cheaper, faster to update, and easier to audit. You can track which chunks were retrieved, inspect the final prompt, and debug failure modes systematically.
 
-1. Ingest source documents.
-2. Break them into chunks.
-3. Convert chunks into embeddings.
-4. Store embeddings and metadata in an index or vector database.
-5. At query time, retrieve the most relevant chunks.
-6. Build a prompt with the retrieved context.
-7. Ask the model to answer using that context.
-
-The value of this architecture is that knowledge lives outside the model. That gives you three major advantages:
-
-1. You can update knowledge without retraining.
-2. You can ground answers in source material.
-3. You can scope answers to a user, tenant, or repository.
-
-RAG is especially strong when facts change often, documents are proprietary, or users need citations. It is less effective when the question requires deep reasoning over very large bodies of evidence that cannot fit into the available context window. In those cases, you often need multi-step retrieval, planning, or tools in addition to basic RAG.
-
-## Architecture overview
-
-A clean RAG architecture has two pipelines: indexing and serving.
-
-Indexing pipeline:
-
-1. Load documents from files, APIs, or databases.
-2. Normalize and clean text.
-3. Split into chunks.
-4. Attach metadata such as title, URL, section, date, tenant, and permissions.
-5. Embed chunks.
-6. Store vectors and metadata.
-
-Serving pipeline:
-
-1. Receive user question.
-2. Optionally rewrite or expand the query.
-3. Retrieve candidate chunks.
-4. Rerank candidates if needed.
-5. Pack the best context into the prompt.
-6. Generate answer.
-7. Return answer with sources.
-
-Here is a minimal mental model in code:
+A minimal LangChain-style RAG answer path:
 
 ```python
+# pip install -U langchain langchain-openai langchain-chroma
+from langchain_openai import ChatOpenAI
+
+# In production this function receives retrieved text chunks.
+def answer_with_context(question: str, context: str) -> str:
+    llm = ChatOpenAI(model="gpt-5.4-mini", temperature=0)
+    prompt = f"""Answer using only the context.
+Question: {question}
+Context: {context}
+If context is insufficient, say so clearly."""
+    # invoke() returns an AIMessage; .content is the final text.
+    return llm.invoke(prompt).content
+```
+
+If you master the pipeline behind this function, you can build reliable AI systems.
+
+## 2. RAG architecture overview — the full pipeline (300 words + diagram in text)
+
+A production RAG system has two loops: indexing and query-time serving.
+
+The indexing loop transforms raw documents into searchable units with metadata and embeddings. The query loop takes user input, retrieves relevant chunks, optionally reranks them, and prompts the model with grounded context.
+
+Text diagram:
+
+```text
+[Data Sources]
+   |-- PDFs
+   |-- Markdown docs
+   |-- Notion/Confluence
+   |-- Databases/APIs
+        |
+        v
+[Load + Normalize + Clean]
+        |
+        v
+[Chunking]
+  - fixed
+  - recursive
+  - semantic
+        |
+        v
+[Embedding]
+        |
+        v
+[Vector Store + Metadata Index]
+        |
+   ----------------------------
+   Query-time path
+   ----------------------------
+        |
+[User Question]
+        |
+        v
+[Query Rewrite/Expansion (optional)]
+        |
+        v
+[Retrieve Top-K Chunks]
+        |
+        v
+[Rerank / Filter]
+        |
+        v
+[Prompt Builder]
+        |
+        v
+[LLM Generation]
+        |
+        v
+[Answer + Citations + Logging]
+```
+
+A clean code skeleton helps you avoid tangled prototypes:
+
+```python
+# pip install -U langchain langchain-core
 from dataclasses import dataclass
+from typing import List, Dict
 
 @dataclass
-class Chunk:
-    id: str
+class RetrievedChunk:
     text: str
-    metadata: dict
-    embedding: list[float] | None = None
+    metadata: Dict[str, str]
+    score: float
 
+def build_index() -> None:
+    # 1) load docs 2) preprocess 3) chunk 4) embed 5) upsert vectors
+    pass
 
-def answer_question(question: str) -> dict:
-    query_embedding = embed_text(question)
-    candidates = vector_search(query_embedding, top_k=8)
-    reranked = rerank(question, candidates)
-    context = build_context(reranked[:4])
-    prompt = make_prompt(question, context)
-    answer = generate(prompt)
-    return {
-        "answer": answer,
-        "sources": [c.metadata for c in reranked[:4]],
-    }
+def retrieve(question: str) -> List[RetrievedChunk]:
+    # 1) vector + lexical retrieval 2) optional reranking
+    return []
+
+def generate(question: str, chunks: List[RetrievedChunk]) -> str:
+    # 1) build grounded prompt 2) call chat model
+    return "stub"
 ```
 
-The exact tools will change across stacks, but this architecture is stable.
+This separation is not style preference. It is operational leverage. You can tune chunking without touching generation, tune retrieval without rewriting loaders, and evaluate each stage independently.
 
-## Chunking strategies
+Add explicit contracts between stages. For example, define a `RetrievedChunk` schema that always includes `source`, `score`, and `chunk_id`. If one stage starts returning different metadata fields, downstream steps break silently unless contracts are explicit.
 
-Chunking is where many RAG systems quietly fail. If chunks are too small, you lose context and coherence. If they are too large, retrieval becomes blurry and expensive. Good chunking preserves semantic meaning while staying small enough for precise retrieval.
+In production, treat each stage as observable:
 
-The simplest approach is fixed-size chunking by characters or tokens with overlap.
+1. Loader metrics: documents ingested per hour, parse failures.
+2. Chunking metrics: average chunk length, overlap ratio.
+3. Retrieval metrics: top-k relevance, latency, filter hit rate.
+4. Generation metrics: groundedness, refusal rate, citation quality.
+
+Minimal stage-timing instrumentation:
 
 ```python
-def chunk_text(text: str, chunk_size: int = 800, overlap: int = 120) -> list[str]:
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start += chunk_size - overlap
-    return chunks
+# pip install -U langchain
+import time
+from contextlib import contextmanager
+
+@contextmanager
+def timed(stage: str):
+    start = time.perf_counter()
+    yield
+    elapsed = (time.perf_counter() - start) * 1000
+    print(f"[timing] {stage}: {elapsed:.1f} ms")
+
+# Example:
+# with timed("retrieve"):
+#     chunks = retrieve(question)
 ```
 
-This baseline is easy to build, but it cuts across paragraphs and headings. A better production strategy is structure-aware chunking:
+## 3. Step 1: Document loading and preprocessing (300 words + code)
 
-1. Split by headings first.
-2. Preserve lists and tables where possible.
-3. Keep paragraph groups together.
-4. Add overlap only when a section exceeds the target size.
+Most RAG failures start before retrieval. If you ingest noisy, duplicated, or malformed text, even a strong retriever will return weak context. Document loading and preprocessing should be treated like data engineering, not boilerplate.
 
-For documentation and knowledge bases, a hybrid strategy works well:
+Best practices:
+
+1. Keep source-aware metadata (`source`, `page`, `updated_at`, `doc_id`).
+2. Normalize whitespace and remove boilerplate headers/footers.
+3. Deduplicate near-identical chunks.
+4. Preserve structural cues (headings, table labels, section titles).
+
+LangChain gives you loaders, but you still need a cleaning layer:
 
 ```python
+# pip install -U langchain-community pypdf unstructured
 import re
+import hashlib
+from typing import List
+from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader, TextLoader
+from langchain_core.documents import Document
 
-def split_by_headings(markdown: str) -> list[tuple[str, str]]:
-    sections = re.split(r"(?m)^##\s+", markdown)
-    results = []
-    for section in sections:
-        if not section.strip():
+def normalize_text(text: str) -> str:
+    # Collapse repeated whitespace and remove trailing spaces.
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+def doc_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+def load_documents(data_dir: str) -> List[Document]:
+    # Load PDFs.
+    pdf_loader = DirectoryLoader(
+        path=f"{data_dir}/pdfs",
+        glob="**/*.pdf",
+        loader_cls=PyPDFLoader
+    )
+    pdf_docs = pdf_loader.load()
+
+    # Load markdown/txt.
+    txt_loader = DirectoryLoader(
+        path=f"{data_dir}/docs",
+        glob="**/*.*",
+        loader_cls=TextLoader,
+        loader_kwargs={"encoding": "utf-8"}
+    )
+    txt_docs = txt_loader.load()
+
+    docs = pdf_docs + txt_docs
+    seen = set()
+    cleaned = []
+
+    for d in docs:
+        d.page_content = normalize_text(d.page_content)
+        h = doc_hash(d.page_content)
+        if h in seen:
             continue
-        lines = section.splitlines()
-        title = lines[0].strip()
-        body = "\n".join(lines[1:]).strip()
-        results.append((title, body))
-    return results
+        seen.add(h)
+        d.metadata["content_hash"] = h
+        cleaned.append(d)
+
+    return cleaned
+
+if __name__ == "__main__":
+    all_docs = load_documents("./data")
+    print(f"Loaded and cleaned {len(all_docs)} documents.")
 ```
 
-The point is not to worship any one chunk size. The point is to preserve the unit of meaning that users are likely to ask about.
+This step directly impacts retrieval precision. Clean inputs reduce false matches, improve chunk quality, and cut wasted embedding/storage costs.
 
-Chunking decisions should reflect your content:
+## 4. Step 2: Chunking strategies — fixed, semantic, recursive (400 words + code)
 
-1. API docs benefit from heading-based chunks with endpoint metadata.
-2. Support articles benefit from section chunks that preserve step sequences.
-3. Legal or policy text may need smaller chunks plus citations to paragraph numbers.
-4. Code repositories often need file-aware chunking and symbols.
+Chunking determines what retrieval can find. If chunks are too small, the model lacks context. If too large, retrieval returns broad but less relevant blocks. There is no universal chunk size. The best strategy depends on document type, question style, and context budget.
 
-You should also store helpful metadata per chunk:
+### Fixed chunking
 
-```python
-chunk = {
-    "id": "docs/rag/intro#chunk-2",
-    "text": "...",
-    "metadata": {
-        "title": "RAG introduction",
-        "section": "Chunking strategies",
-        "url": "/docs/rag",
-        "version": "2025-10",
-        "tenant_id": "acme",
-    }
-}
-```
+Fixed chunking uses a constant size and overlap. It is fast, predictable, and easy to tune. Good for uniform text such as logs or short docs.
 
-Metadata is what makes filtering, authorization, and citations possible later.
+### Recursive chunking
 
-## Embedding models
+Recursive chunking keeps semantic structure by splitting with a hierarchy (`\n\n`, `\n`, punctuation, spaces) before hard-cutting. It usually outperforms naive fixed chunking for knowledge docs.
 
-An embedding model converts text into vectors that capture semantic similarity. At retrieval time, the system compares the query vector to chunk vectors and returns the closest matches.
+### Semantic chunking
 
-When choosing an embedding model, focus on:
+Semantic chunking groups adjacent sentences by meaning similarity. It is slower but can improve retrieval for mixed-topic documents.
 
-1. Retrieval quality on your domain.
-2. Dimensionality and storage cost.
-3. Latency and throughput.
-4. Language support.
-5. Stability across updates.
+A practical approach in 2026:
 
-You do not need the biggest model to get strong retrieval. You need the one that separates relevant from irrelevant passages for your actual data.
+1. Start recursive with moderate overlap.
+2. Evaluate retrieval hit rate.
+3. Add semantic splitting for long, multi-topic documents only.
 
-Here is a simple abstraction:
+Code:
 
 ```python
-from openai import OpenAI
+# pip install -U langchain-text-splitters langchain-openai numpy
+from typing import List
+import numpy as np
+from langchain_core.documents import Document
+from langchain_text_splitters import CharacterTextSplitter, RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
 
-client = OpenAI()
-
-def embed_text(text: str) -> list[float]:
-    response = client.embeddings.create(
-        model="text-embedding-3-large",
-        input=text,
+def fixed_chunks(docs: List[Document]) -> List[Document]:
+    splitter = CharacterTextSplitter(
+        chunk_size=800,
+        chunk_overlap=120,
+        separator="\n"
     )
-    return response.data[0].embedding
-```
+    return splitter.split_documents(docs)
 
-If you batch indexing jobs, make sure you use batching to improve throughput:
-
-```python
-def embed_batch(texts: list[str]) -> list[list[float]]:
-    response = client.embeddings.create(
-        model="text-embedding-3-large",
-        input=texts,
+def recursive_chunks(docs: List[Document]) -> List[Document]:
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=900,
+        chunk_overlap=150,
+        separators=["\n## ", "\n### ", "\n\n", "\n", ". ", " ", ""]
     )
-    return [item.embedding for item in response.data]
+    return splitter.split_documents(docs)
+
+def semantic_chunks_single_doc(doc: Document, threshold: float = 0.78) -> List[Document]:
+    # Simple semantic chunker: split by paragraph, then merge while similarity stays high.
+    paras = [p.strip() for p in doc.page_content.split("\n\n") if p.strip()]
+    if len(paras) <= 1:
+        return [doc]
+
+    embedder = OpenAIEmbeddings(model="text-embedding-3-large")
+    vecs = np.array(embedder.embed_documents(paras))
+
+    chunks = []
+    current = [paras[0]]
+    for i in range(1, len(paras)):
+        a = vecs[i - 1]
+        b = vecs[i]
+        sim = float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8))
+        if sim >= threshold:
+            current.append(paras[i])
+        else:
+            chunks.append("\n\n".join(current))
+            current = [paras[i]]
+    chunks.append("\n\n".join(current))
+
+    out = []
+    for c in chunks:
+        out.append(Document(page_content=c, metadata=dict(doc.metadata)))
+    return out
 ```
 
-Evaluate embeddings on your own corpus. A model that performs well on a public benchmark may still underperform on terse support tickets, dense research notes, or multilingual internal docs. Retrieval is domain shaped.
+Tune chunking with metrics, not intuition. If your retriever misses answers, chunking is often the first thing to revisit.
 
-## Vector databases
-
-Vector databases store embeddings and allow nearest-neighbor search. Popular choices differ in ergonomics, filtering support, scale, and operational complexity, but the functional requirements are similar:
-
-1. Upserts for new or changed chunks.
-2. Metadata filtering.
-3. Fast top-k search.
-4. Namespaces or multitenancy support.
-5. Good operational tooling.
-
-The storage abstraction can be simple:
+A practical evaluation method is chunking grid search. You run the same query set against different chunk settings and compare retrieval hit rate and generation faithfulness.
 
 ```python
-class VectorStore:
-    def upsert(self, items: list[dict]) -> None:
-        raise NotImplementedError
+# pip install -U langchain-text-splitters
+from dataclasses import dataclass
+from typing import List, Tuple
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 
-    def search(self, query_vector: list[float], top_k: int, filters: dict | None = None) -> list[dict]:
-        raise NotImplementedError
-```
+@dataclass
+class ChunkConfig:
+    chunk_size: int
+    chunk_overlap: int
 
-A pseudo-implementation using metadata filtering:
-
-```python
-def retrieve(query: str, tenant_id: str) -> list[dict]:
-    vector = embed_text(query)
-    return store.search(
-        query_vector=vector,
-        top_k=10,
-        filters={"tenant_id": tenant_id, "published": True},
+def chunk_with_config(docs: List[Document], cfg: ChunkConfig) -> List[Document]:
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=cfg.chunk_size,
+        chunk_overlap=cfg.chunk_overlap
     )
+    return splitter.split_documents(docs)
+
+def grid_configs() -> List[ChunkConfig]:
+    return [
+        ChunkConfig(600, 80),
+        ChunkConfig(800, 120),
+        ChunkConfig(1000, 150),
+    ]
+
+# Pair this with your retrieval evaluation harness and pick the best config.
 ```
 
-Filtering matters as much as similarity. If users should only see documents from their workspace, authorization must happen during retrieval, not after generation.
+## 5. Step 3: Embedding models compared — OpenAI, Cohere, open-source (300 words + code)
 
-You should also think about freshness. In production systems, documents change. Your index needs a way to re-embed only changed content, delete removed chunks, and keep metadata consistent. Incremental indexing is not optional once the corpus grows.
+Embeddings convert text into vectors for semantic search. Retrieval quality often depends more on embedding choice and chunk quality than on the generation model itself.
 
-## Retrieval
+Three practical embedding paths:
 
-Basic vector retrieval is often enough for a prototype. Production systems usually need more than one retrieval tactic because queries vary in form.
+1. OpenAI embeddings: strong default quality, easy API workflow.
+2. Cohere embeddings: competitive retrieval-focused options.
+3. Open-source embeddings: best for cost control, private deployment, and on-prem constraints.
 
-Common improvements include:
+When comparing embeddings, evaluate on your own corpus:
 
-1. Query rewriting: turn a vague user question into a clearer search query.
-2. Hybrid search: combine vector similarity with keyword retrieval.
-3. Metadata filtering: narrow by product, date, tenant, or document type.
-4. Multi-query retrieval: generate alternate phrasings and merge results.
-5. Reranking: score candidates with a stronger model before prompt assembly.
+1. Recall@k: does top-k contain answer-bearing chunks?
+2. Precision@k: how much irrelevant text is retrieved?
+3. Latency and cost per query.
 
-A simple query rewriting step:
+Code:
 
 ```python
-def rewrite_query(question: str) -> str:
-    prompt = f"""
-    Rewrite the user's question into a concise retrieval query.
-    Preserve meaning. Add key technical terms if they are implied.
-    Question: {question}
-    """
-    return generate(prompt).strip()
+# pip install -U langchain-openai langchain-cohere langchain-huggingface sentence-transformers
+from langchain_openai import OpenAIEmbeddings
+from langchain_cohere import CohereEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
+
+SAMPLE_TEXTS = [
+    "RAG improves factuality by grounding responses in retrieved context.",
+    "Chunk size and overlap strongly affect retrieval quality.",
+    "Reranking can improve relevance in multi-stage retrieval."
+]
+
+def compare_embeddings():
+    # OpenAI embedding model.
+    openai_emb = OpenAIEmbeddings(model="text-embedding-3-large")
+    v_openai = openai_emb.embed_documents(SAMPLE_TEXTS)
+
+    # Cohere embedding model.
+    cohere_emb = CohereEmbeddings(model="embed-english-v3.0")
+    v_cohere = cohere_emb.embed_documents(SAMPLE_TEXTS)
+
+    # Open-source local embedding model.
+    hf_emb = HuggingFaceEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+    v_hf = hf_emb.embed_documents(SAMPLE_TEXTS)
+
+    print(f"OpenAI vectors: {len(v_openai)} docs, dim={len(v_openai[0])}")
+    print(f"Cohere vectors: {len(v_cohere)} docs, dim={len(v_cohere[0])}")
+    print(f"HF vectors: {len(v_hf)} docs, dim={len(v_hf[0])}")
+
+if __name__ == "__main__":
+    compare_embeddings()
 ```
 
-You can also merge vector and keyword scores:
+There is no best embedding model in abstraction. The best one is the model that maximizes retrieval accuracy on your documents at acceptable cost and latency.
+
+## 6. Step 4: Vector databases compared — Pinecone, Weaviate, pgvector, Chroma (400 words)
+
+Your vector database choice should match operational constraints, not trends. All four options can work; they optimize different tradeoffs.
+
+Pinecone:
+
+1. Managed and scalable with low operational overhead.
+2. Good for teams that want fast time-to-production.
+3. Strong filtering and index management, but external service dependency.
+
+Weaviate:
+
+1. Flexible schema and hybrid search capabilities.
+2. Works well for teams that want rich metadata queries.
+3. Good fit for semantic + structured filtering workflows.
+
+pgvector:
+
+1. Best when your organization already runs PostgreSQL heavily.
+2. Transactional consistency and familiar SQL ecosystem.
+3. Great for moderate scale with strict operational control.
+
+Chroma:
+
+1. Excellent local development and rapid prototyping.
+2. Easy setup and fast iteration.
+3. Good default for MVPs, local experiments, and smaller deployments.
+
+A practical selection rule:
+
+1. Prototype locally with Chroma.
+2. Move to pgvector if your stack is Postgres-first and scale is moderate.
+3. Use Pinecone/Weaviate when you need managed scaling or specialized capabilities.
+
+LangChain setup examples for each:
 
 ```python
-def hybrid_retrieve(question: str) -> list[dict]:
-    dense = dense_search(question, top_k=20)
-    sparse = keyword_search(question, top_k=20)
-    return fuse_results([dense, sparse])
+# pip install -U langchain-openai langchain-chroma langchain-pinecone pinecone langchain-weaviate weaviate-client langchain-postgres psycopg[binary]
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.documents import Document
+
+docs = [Document(page_content="RAG systems need good chunking.", metadata={"source": "guide"})]
+emb = OpenAIEmbeddings(model="text-embedding-3-large")
+
+# 1) Chroma (local)
+from langchain_chroma import Chroma
+chroma_store = Chroma.from_documents(documents=docs, embedding=emb, collection_name="rag_local")
+
+# 2) Pinecone (managed)
+from pinecone import Pinecone
+from langchain_pinecone import PineconeVectorStore
+pc = Pinecone(api_key="YOUR_PINECONE_API_KEY")
+# index must exist beforehand
+pinecone_store = PineconeVectorStore(index_name="rag-index", embedding=emb, pinecone_api_key="YOUR_PINECONE_API_KEY")
+
+# 3) Weaviate
+import weaviate
+from langchain_weaviate import WeaviateVectorStore
+client = weaviate.connect_to_local()  # or connect_to_weaviate_cloud(...)
+weaviate_store = WeaviateVectorStore(client=client, index_name="RagDocs", text_key="text", embedding=emb)
+
+# 4) pgvector (LangChain Postgres integration)
+from langchain_postgres import PGVector
+pg_store = PGVector(
+    embeddings=emb,
+    collection_name="rag_docs",
+    connection="postgresql+psycopg://langchain:langchain@localhost:6024/langchain"
+)
 ```
 
-Why does hybrid search help? Because some questions hinge on exact tokens such as error codes, table names, product SKUs, or regulatory phrases. Pure vector similarity can miss those. Sparse retrieval catches them.
+You can keep one retriever interface and swap stores behind it. That architectural choice lowers migration risk as traffic grows.
 
-Reranking is one of the highest ROI upgrades in RAG. Instead of trusting the initial nearest-neighbor order, you pass the top candidates to a reranker that scores relevance with respect to the actual question.
+A clean adapter pattern keeps application code stable while storage backends change:
 
 ```python
-def rerank(question: str, candidates: list[dict]) -> list[dict]:
-    scored = []
-    for candidate in candidates:
-        score = relevance_model(question, candidate["text"])
-        scored.append((score, candidate))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [item for _, item in scored]
+# pip install -U langchain
+from typing import Protocol, List
+from langchain_core.documents import Document
+
+class VectorAdapter(Protocol):
+    def add_documents(self, docs: List[Document]) -> None:
+        ...
+    def similarity_search(self, query: str, k: int) -> List[Document]:
+        ...
+
+def query_knowledge_base(adapter: VectorAdapter, q: str) -> List[Document]:
+    # App code depends on interface, not vendor-specific details.
+    return adapter.similarity_search(q, k=5)
 ```
 
-The reason reranking works is that approximate nearest-neighbor search optimizes for fast similarity, not task-specific relevance.
+That small abstraction pays off when you migrate from local Chroma to managed Pinecone, or from one cloud vendor to another, without rewriting your full generation layer.
 
-## Generation
+## 7. Step 5: Retrieval strategies — similarity search, hybrid search, reranking (400 words + code)
 
-Once you have good chunks, generation should be constrained and grounded. The model should know that retrieved context is the source of truth.
+Retrieval is where production RAG quality is won or lost. A common anti-pattern is spending most effort on generation prompts while retrieval remains shallow. If wrong context enters the prompt, no prompt template can fully rescue output quality.
 
-Here is a robust answer prompt:
+### Similarity search
+
+Dense vector search is the baseline. It finds semantically related chunks and is strong for natural-language queries.
+
+### Hybrid search
+
+Hybrid search combines dense vectors with lexical matching. This helps when queries contain exact terms: error codes, IDs, function names, policy clauses.
+
+### Reranking
+
+Rerankers reorder retrieved candidates by query relevance. In practice, reranking often improves answer quality more than increasing top-k blindly.
+
+Implementation strategy:
+
+1. Retrieve top-20 candidates quickly.
+2. Apply metadata filters early.
+3. Rerank to top-5 to top-8 for generation.
+4. Log retrieved chunks for debugging.
+
+Code:
 
 ```python
-def make_prompt(question: str, context: str) -> str:
-    return f"""
-You are a helpful AI assistant answering questions from a knowledge base.
+# pip install -U langchain langchain-openai langchain-chroma langchain-cohere rank-bm25
+from typing import List
+from langchain_core.documents import Document
+from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+from langchain_cohere import CohereRerank
+from rank_bm25 import BM25Okapi
 
-Rules:
-- Answer using only the provided context
-- If the answer is not stated in the context, say you do not have enough information
-- Be concise but complete
-- Cite the source IDs you used at the end
+# Build sample vector store.
+docs = [
+    Document(page_content="Retry logic without backoff can overload queues.", metadata={"id": "d1"}),
+    Document(page_content="RAG retrieval quality depends on chunking and embeddings.", metadata={"id": "d2"}),
+    Document(page_content="Error E_CONN_RESET often appears during upstream timeouts.", metadata={"id": "d3"}),
+]
+emb = OpenAIEmbeddings(model="text-embedding-3-large")
+store = Chroma.from_documents(docs, embedding=emb, collection_name="retrieval_demo")
+
+def similarity_search(query: str, k: int = 5) -> List[Document]:
+    # Dense retrieval baseline.
+    return store.similarity_search(query, k=k)
+
+def hybrid_search(query: str, k_dense: int = 8, k_final: int = 5) -> List[Document]:
+    # Dense candidates.
+    dense_docs = store.similarity_search(query, k=k_dense)
+
+    # Lexical scores using BM25 over candidate set.
+    tokenized = [d.page_content.lower().split() for d in dense_docs]
+    bm25 = BM25Okapi(tokenized)
+    scores = bm25.get_scores(query.lower().split())
+
+    # Combine dense rank + lexical score (simple hybrid blend).
+    ranked = sorted(zip(dense_docs, scores), key=lambda x: x[1], reverse=True)
+    return [d for d, _ in ranked[:k_final]]
+
+def rerank(query: str, candidates: List[Document], top_n: int = 3) -> List[Document]:
+    # Cohere reranker returns a relevance-based ordering.
+    reranker = CohereRerank(model="rerank-v3.5")
+    compressed = reranker.compress_documents(documents=candidates, query=query)
+    return compressed[:top_n]
+
+if __name__ == "__main__":
+    q = "How do I fix queue overload caused by retries?"
+    cands = hybrid_search(q)
+    best = rerank(q, cands, top_n=2)
+    for d in best:
+        print(d.page_content, d.metadata)
+```
+
+Treat retrieval as a first-class subsystem. Evaluate it independently before tuning generation.
+
+You should also add query rewriting for low-quality user queries. Many user questions are short and ambiguous ("this broke, why?"). A rewrite step can convert them into better retrieval queries.
+
+```python
+# pip install -U langchain langchain-openai
+from langchain_openai import ChatOpenAI
+
+def rewrite_query_for_retrieval(question: str) -> str:
+    llm = ChatOpenAI(model="gpt-5.4-mini", temperature=0)
+    prompt = f"""Rewrite this into a concise retrieval query.
+Include key technical terms if implied.
+Question: {question}
+Return only the rewritten query."""
+    return llm.invoke(prompt).content.strip()
+```
+
+For ambiguous questions, rewrite + hybrid retrieval + reranking is often far better than dense search alone.
+
+## 8. Step 6: Generation — prompt templates for RAG (300 words + code)
+
+Generation in RAG should be grounded, constrained, and explicit about uncertainty. A common failure mode is giving the model retrieved text but not forcing it to stay within that context.
+
+A production-ready RAG prompt should include:
+
+1. A grounding rule: answer only from provided context.
+2. A refusal rule: if context is insufficient, say so.
+3. A citation rule: reference source IDs.
+4. A formatting rule: concise and structured output.
+
+Using LangChain prompt templates keeps this maintainable and testable.
+
+Code:
+
+```python
+# pip install -U langchain langchain-openai
+from typing import List
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+
+RAG_PROMPT = ChatPromptTemplate.from_template(
+    """You are a factual assistant.
+Use only the context to answer the question.
+If context is missing the answer, say: "I do not have enough context."
 
 Question:
 {question}
 
 Context:
 {context}
+
+Return format:
+1) Answer (2-5 sentences)
+2) Citations: comma-separated source ids
 """
+)
+
+def format_context(chunks: List[Document]) -> str:
+    # Preserve source id in context so the model can cite.
+    lines = []
+    for i, c in enumerate(chunks, start=1):
+        sid = c.metadata.get("id", f"chunk_{i}")
+        lines.append(f"[source_id={sid}] {c.page_content}")
+    return "\n".join(lines)
+
+def generate_answer(question: str, chunks: List[Document]) -> str:
+    llm = ChatOpenAI(model="gpt-5.4-mini", temperature=0)
+    context = format_context(chunks)
+    prompt = RAG_PROMPT.format_messages(question=question, context=context)
+    return llm.invoke(prompt).content
 ```
 
-And a context builder:
+Prompt quality still matters in RAG. Retrieval brings evidence; prompt design controls how evidence is used.
+
+It also helps to maintain multiple prompt templates by task type:
+
+1. Fact QA template (strict grounding).
+2. Summarization template (structured sections + citations).
+3. Decision-support template (assumptions + risks + recommendation).
+
+Routing by task type can reduce prompt bloat and improve consistency:
 
 ```python
-def build_context(chunks: list[dict]) -> str:
-    parts = []
-    for chunk in chunks:
-        parts.append(
-            f"[source_id: {chunk['id']}]\n"
-            f"title: {chunk['metadata'].get('title')}\n"
-            f"text: {chunk['text']}\n"
-        )
-    return "\n---\n".join(parts)
+# pip install -U langchain
+from typing import Literal
+
+TaskType = Literal["qa", "summary", "decision"]
+
+def select_prompt(task: TaskType) -> str:
+    if task == "qa":
+        return "Answer only from context. If missing, say insufficient context."
+    if task == "summary":
+        return "Summarize in 5 bullets and cite source ids."
+    return "Provide options, risks, and recommendation with citations."
 ```
 
-The best generation prompts do not ask the model to do everything at once. They define the scope of authority. The model is allowed to synthesize and explain, but not to invent missing facts.
+Template routing makes your RAG layer easier to audit and evolve than one giant universal prompt.
 
-You should also think about context packing. If you retrieve 12 chunks but only 4 are actually central, stuffing all 12 into the prompt can make the answer worse. Context quality beats context volume.
+## 9. Step 7: Evaluating your RAG system with RAGAS (300 words + code)
 
-## Evaluation
+If you do not evaluate RAG, you are guessing. User feedback is useful but too slow for iteration loops. RAGAS gives you repeatable metrics for retrieval and answer quality.
 
-If you do not evaluate RAG systematically, you will not know whether failures come from retrieval, prompting, generation, or the source documents. Evaluation is what turns a demo into an engineering system.
+Typical RAGAS metrics:
 
-At minimum, create a small labeled set of questions with expected answers or relevant source chunks. Then measure:
+1. Context precision: retrieved context relevance.
+2. Context recall: whether needed context was retrieved.
+3. Faithfulness: answer grounded in context.
+4. Answer relevancy: answer relevance to question.
 
-1. Retrieval recall: did the system retrieve a chunk that contained the answer?
-2. Precision at k: how many retrieved chunks were actually relevant?
-3. Answer groundedness: does the answer stay within the provided context?
-4. Answer correctness: is the final answer right?
-5. Citation quality: are the cited chunks actually supportive?
+Evaluation workflow:
 
-Example evaluation loop:
+1. Build a validation dataset of real queries.
+2. Store ground-truth answers where possible.
+3. Run metrics per build.
+4. Track regressions after chunking/retriever/prompt changes.
+
+Code:
 
 ```python
-def evaluate(dataset: list[dict]) -> list[dict]:
-    results = []
-    for row in dataset:
-        retrieved = retrieve(row["question"], tenant_id=row["tenant_id"])
-        hit = any(chunk["id"] in row["expected_chunk_ids"] for chunk in retrieved[:5])
-        prompt = make_prompt(row["question"], build_context(retrieved[:4]))
-        answer = generate(prompt)
-        results.append({
-            "question": row["question"],
-            "retrieval_hit_at_5": hit,
-            "answer": answer,
-        })
-    return results
+# pip install -U ragas datasets langchain-openai
+from datasets import Dataset
+from ragas import evaluate
+from ragas.metrics import context_precision, context_recall, faithfulness, answer_relevancy
+
+# Minimal evaluation set (replace with real production-like samples).
+eval_data = {
+    "question": [
+        "Why can unbounded retries hurt queue stability?"
+    ],
+    "answer": [
+        "Unbounded retries can repeatedly enqueue failed jobs and overload the queue."
+    ],
+    "contexts": [[
+        "Retry logic without limits can create retry storms and queue saturation."
+    ]],
+    "ground_truth": [
+        "Unbounded retries increase repeated work, causing queue overload and service instability."
+    ],
+}
+
+def run_ragas_eval():
+    dataset = Dataset.from_dict(eval_data)
+    # RAGAS computes metric scores over your dataset.
+    results = evaluate(
+        dataset,
+        metrics=[context_precision, context_recall, faithfulness, answer_relevancy]
+    )
+    print(results)
+
+if __name__ == "__main__":
+    run_ragas_eval()
 ```
 
-For early-stage systems, even a spreadsheet-based evaluation set is enough. The important part is to label representative failures:
+Do not optimize one metric in isolation. A system can score high on relevancy but still hallucinate. Use a balanced metric view plus manual spot checks.
 
-1. Missed retrieval because chunking was bad.
-2. Wrong retrieval because embeddings were weak.
-3. Good retrieval but weak prompt grounding.
-4. Good retrieval and prompt, but the answer still overreached.
-5. The source docs themselves were incomplete.
+For practical teams, evaluation cadence matters as much as metric choice:
 
-Once you classify failures, improvements become much more targeted.
+1. Daily smoke eval on 20-30 critical queries.
+2. Weekly full eval on a larger stratified dataset.
+3. Pre-release gate: no regression in faithfulness and context precision.
 
-## Production guidance
+A tiny local report helper:
 
-A few production lessons matter more than most architectural debates.
+```python
+# pip install -U pandas
+import pandas as pd
 
-First, retrieval quality dominates. Teams often spend too much time changing generation prompts when the real problem is that the right evidence never reached the model.
+def save_eval_report(rows: list[dict], out_path: str = "rag_eval_report.csv") -> None:
+    df = pd.DataFrame(rows)
+    # Example columns: build_id, context_precision, faithfulness, answer_relevancy
+    df.to_csv(out_path, index=False)
+    print(f"Saved report to {out_path}")
+```
 
-Second, metadata and permissions are core features, not cleanup work. A system that retrieves the wrong tenant's content is not a mildly bad RAG system. It is a security incident.
+When you pair automatic metrics with targeted human review, RAG quality becomes measurable engineering work instead of subjective debate.
 
-Third, citations dramatically improve trust and debugging. Even if users do not inspect them often, your team will use them to understand failures.
+## 10. Common RAG mistakes and how to fix them (300 words)
 
-Fourth, index freshness needs ownership. Decide how new content enters the system, how updates are detected, and what triggers re-embedding. If no one owns freshness, the knowledge hub slowly decays.
+RAG failures are often systematic, not random. Here are practical mistakes and concrete fixes.
 
-Finally, keep the architecture observable. Log query rewrites, retrieved chunk IDs, final prompt size, answer latency, and user feedback. RAG is much easier to improve when you can see each stage of the pipeline.
+1. Mistake: Oversized chunks.
+Fix: Reduce chunk size and test recall@k vs precision@k. Large chunks dilute relevance.
 
-RAG from scratch is not complicated because any one piece is hard. It is complicated because the pieces interact. Chunking affects retrieval. Retrieval affects grounding. Grounding affects answer quality. Evaluation is what keeps those interactions visible. If you build with that full loop in mind, your RAG system will grow from a prototype into a dependable product.
+2. Mistake: No metadata filtering.
+Fix: Apply filters by tenant, product, version, or date before generation.
+
+3. Mistake: Retrieval-only tuning.
+Fix: Tune chunking, embeddings, and reranking together.
+
+4. Mistake: Weak grounding prompt.
+Fix: Require "answer only from context" and explicit insufficient-context behavior.
+
+5. Mistake: No evaluation loop.
+Fix: Run RAGAS + human checks on a fixed validation set each release.
+
+6. Mistake: Ignoring stale indexes.
+Fix: Implement incremental indexing and document deletion sync.
+
+7. Mistake: Blindly increasing top-k.
+Fix: Retrieve wide, rerank narrow. More context is not always better context.
+
+Debug helper:
+
+```python
+# pip install -U langchain
+from typing import List
+from langchain_core.documents import Document
+
+def debug_retrieval(question: str, docs: List[Document]) -> None:
+    # Print what the model actually saw for root-cause analysis.
+    print(f"QUESTION: {question}")
+    print("=" * 80)
+    for i, d in enumerate(docs, start=1):
+        src = d.metadata.get("source", "unknown")
+        print(f"[{i}] source={src}")
+        print(d.page_content[:350], "...\n")
+
+# Call this before generation whenever answer quality drops.
+```
+
+If you cannot inspect retrieved context and prompts, you cannot reliably fix quality issues.
+
+A robust fix workflow:
+
+1. Capture failing query and full retrieved context.
+2. Label failure source: retrieval miss, chunking issue, grounding prompt issue, or generation overreach.
+3. Apply the smallest targeted change.
+4. Re-run eval suite and compare before/after.
+
+Automated failure labeling scaffold:
+
+```python
+# pip install -U langchain
+from typing import Literal
+
+FailureType = Literal["retrieval_miss", "chunking", "prompting", "generation", "unknown"]
+
+def classify_failure(has_answer_in_retrieved: bool, answer_grounded: bool) -> FailureType:
+    if not has_answer_in_retrieved:
+        return "retrieval_miss"
+    if has_answer_in_retrieved and not answer_grounded:
+        return "generation"
+    return "unknown"
+```
+
+This discipline is how high-performing teams keep RAG quality improving instead of oscillating.
+
+## 11. Advanced RAG — agentic RAG, multimodal RAG, GraphRAG (200 words)
+
+Once baseline RAG is stable, advanced designs unlock bigger capabilities.
+
+Agentic RAG: an agent decides when to retrieve, which tool to call, and whether to run another retrieval step. This is useful for multi-hop questions and task workflows.
+
+Multimodal RAG: retrieve not only text but also images, tables, and diagrams. Essential for technical docs, support manuals, and analytics workflows.
+
+GraphRAG: combine vector retrieval with graph traversal over entities and relationships. Useful when answers depend on connected facts rather than isolated chunks.
+
+A minimal agentic retrieval loop:
+
+```python
+# pip install -U langchain langchain-openai
+from langchain_openai import ChatOpenAI
+
+def should_retrieve(question: str) -> bool:
+    llm = ChatOpenAI(model="gpt-5.4-mini", temperature=0)
+    decision = llm.invoke(
+        f"Decide if this question needs external retrieval. Return only YES or NO.\nQuestion: {question}"
+    ).content.strip().upper()
+    return decision == "YES"
+
+def agentic_rag_step(question: str) -> str:
+    if should_retrieve(question):
+        # In production: call retriever, reranker, generator.
+        return "Retrieval path selected."
+    return "Direct answer path selected."
+```
+
+Advanced RAG is not mandatory on day one. Ship a strong baseline first, then add sophistication where it clearly improves outcomes.
+
+GraphRAG deserves special care. It is powerful when questions depend on entity relationships (for example, "which teams depend on service X and were impacted by incident Y?"), but it adds ingestion and schema overhead.
+
+A simple bridge pattern is often enough:
+
+1. Use graph queries for relationship-heavy questions.
+2. Use vector retrieval for narrative and procedural docs.
+3. Merge both contexts into a grounded generation prompt.
+
+```python
+# pip install -U langchain
+from langchain_core.documents import Document
+
+def merge_graph_and_vector_context(graph_facts: list[str], vector_docs: list[Document]) -> str:
+    graph_block = "\n".join(f"- {f}" for f in graph_facts)
+    vector_block = "\n".join(f"- {d.page_content}" for d in vector_docs[:5])
+    return f"Graph facts:\n{graph_block}\n\nVector context:\n{vector_block}"
+```
+
+That pattern gives most of the GraphRAG benefit before you commit to a heavy graph-first architecture.
+
+## 12. What to learn next (100 words)
+
+After implementing this guide, focus on retrieval observability, prompt versioning, and continuous evaluation. Add query classification for better routing, then introduce adaptive top-k and dynamic reranking thresholds. Learn how to maintain index freshness automatically from your source systems. For enterprise deployments, prioritize access control, PII redaction, and audit logs. Study agentic orchestration only after your baseline RAG metrics are stable. The fastest path to expert-level RAG is iterative: measure, change one component, re-measure, and keep a rollback path for every experiment.
+
+One practical learning sequence for the next 30 days:
+
+1. Week 1: Build a clean baseline and lock an eval dataset.
+2. Week 2: Tune chunking + retrieval with measurable gates.
+3. Week 3: Add reranking, metadata filters, and prompt routing.
+4. Week 4: Add monitoring, incident playbooks, and release checklists.
+
+If you follow that sequence and track regressions rigorously, your RAG stack will become more reliable each week instead of becoming a fragile collection of ad-hoc tweaks.
+
+```python
+# pip install -U langchain
+# Next milestone checklist as executable Python data.
+next_steps = [
+    "Add retrieval logs and latency dashboards",
+    "Create a 100-query RAG evaluation set",
+    "Set pass/fail gates for faithfulness and context precision",
+    "Automate index refresh from source-of-truth systems",
+]
+print("\n".join(f"- {s}" for s in next_steps))
+```
