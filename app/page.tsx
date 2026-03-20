@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpenText, BrainCircuit, Bot, DatabaseZap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 
 const featuredGuides = [
   {
@@ -114,16 +115,7 @@ export default function HomePage() {
                 evaluation methods, and implementation patterns without the hype.
               </p>
             </div>
-            <form className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="h-11 rounded-lg border border-border bg-background px-4 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
-              />
-              <Button type="submit" className="h-11">
-                Subscribe
-              </Button>
-            </form>
+            <NewsletterSignup />
           </div>
         </Card>
       </section>

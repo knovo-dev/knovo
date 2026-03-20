@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Moon, Sparkles, Sun } from "lucide-react";
+import { Menu, Moon, Sparkles, Sun, X } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -58,17 +58,20 @@ export function Navbar() {
 
         <button
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border md:hidden"
-          aria-label="Open menu"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          aria-controls="mobile-nav-menu"
           onClick={() => setOpen((value) => !value)}
         >
-          <Menu className="size-5" />
+          {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </div>
 
       <div
+        id="mobile-nav-menu"
         className={cn(
-          "overflow-hidden border-t border-border md:hidden",
-          open ? "max-h-80" : "max-h-0 border-t-0",
+          "overflow-hidden border-t border-border transition-all duration-300 ease-in-out md:hidden",
+          open ? "max-h-80 opacity-100" : "max-h-0 border-t-0 opacity-0",
         )}
       >
         <div className="space-y-1 px-4 py-4">
