@@ -11,7 +11,7 @@ featured: true
 
 Prompt engineering is the discipline of turning a language model into a reliable collaborator. It is not about discovering one secret phrase. It is about designing instructions so the model clearly understands the task, uses the right context, and returns output you can use without cleanup. This guide keeps the practical spirit of the original content and expands it into a full playbook you can apply to real products, internal tools, and everyday workflows.
 
-## 1. What is prompt engineering and why it matters (200 words)
+## 1. What is prompt engineering and why it matters
 
 Prompt engineering is the practice of shaping model inputs so outputs become useful, consistent, and trustworthy. You can think of a prompt as an interface contract. If the contract is vague, results drift. If the contract is clear, results become predictable. This is why prompt engineering matters even as models improve: better models still need clear goals, good context, and explicit success criteria.
 
@@ -21,7 +21,7 @@ Prompt engineering also helps teams reason about failures. Instead of saying "th
 
 The key takeaway is simple: prompt engineering is not a temporary hack. It is a durable skill for communicating intent to probabilistic systems in a way that produces consistently useful work.
 
-## 2. The anatomy of a great prompt (300 words) — instruction, context, input data, output format
+## 2. The anatomy of a great prompt — instruction, context, input data, output format
 
 Most poor prompts fail for one reason: they blur what the model should do, what information it should use, and what final shape the answer should take. A great prompt separates those concerns into four explicit parts.
 
@@ -76,7 +76,7 @@ Next Actions:
 WHY IT WORKS:
 The prompt cleanly separates instruction, context, and format, so the model is not forced to infer hidden expectations.
 
-## 3. Zero-shot prompting — when and how (300 words + 3 real examples)
+## 3. Zero-shot prompting — when and how
 
 Zero-shot prompting means asking the model to perform a task without examples. It works best when the task is common, the objective is explicit, and the output format is constrained. If your prompt is clear enough, zero-shot is often faster and cheaper than few-shot because it avoids additional tokens for demonstrations.
 
@@ -173,7 +173,7 @@ account_access
 WHY IT WORKS:
 A closed label set and strict output instruction reduce creative drift and make results automation-friendly.
 
-## 4. Few-shot prompting — the power of examples (300 words + 3 before/after examples)
+## 4. Few-shot prompting — the power of examples
 
 Few-shot prompting adds demonstrations of desired behavior. This is powerful when instructions alone are not enough to encode nuance. Examples show mapping, style, and boundary decisions in a way that prose rules often cannot.
 
@@ -311,7 +311,7 @@ We reduced outage risk by preventing repeated failures when background jobs expe
 WHY IT WORKS:
 The example anchors style and meaning preservation, preventing over-generic rewrites.
 
-## 5. Chain-of-thought prompting (400 words + 2 detailed examples)
+## 5. Chain-of-thought prompting
 
 Chain-of-thought prompting is the practice of encouraging stepwise reasoning for tasks that benefit from decomposition. The core idea is practical: complex tasks become more reliable when the model first organizes the problem before producing a final answer.
 
@@ -430,7 +430,7 @@ Track rate of "not_found" responses and alert on sudden spikes.
 WHY IT WORKS:
 The required process makes the model separate diagnosis, patching, and validation, which improves correctness and maintainability.
 
-## 6. System prompts — how to write them properly (400 words + full working example)
+## 6. System prompts — how to write them properly
 
 System prompts define stable behavior across many user requests. They are not for one-off task details. They are for defaults: accuracy posture, safety boundaries, style constraints, and behavior under uncertainty.
 
@@ -505,7 +505,7 @@ Contractors may receive redacted incident summaries through approved channels.
 WHY IT WORKS:
 The system layer enforces stable behavior and non-fabrication, while the user layer provides the narrow task and evidence.
 
-## 7. Structured output — getting JSON, lists, specific formats (300 words + examples)
+## 7. Structured output — getting JSON, lists, specific formats
 
 Structured output is essential when model responses feed software systems. Human-readable prose is useful for people, but automation needs predictable shape. The model must know exactly what to return and what to do if fields are missing.
 
@@ -571,7 +571,7 @@ OUTPUT:
 WHY IT WORKS:
 Prefix constraints enforce a parseable taxonomy while preserving natural language readability.
 
-## 8. Advanced techniques — Self-consistency, Tree of Thought, ReAct (300 words)
+## 8. Advanced techniques — Self-consistency, Tree of Thought, ReAct
 
 Advanced prompting techniques are useful when direct prompting is not enough.
 
@@ -612,7 +612,7 @@ Final Answer: Incident trend is increasing week over week (+50%).
 WHY IT WORKS:
 Separating reasoning from evidence collection prevents unsupported conclusions and improves auditability.
 
-## 9. The 10 most common prompt mistakes and how to fix each (400 words)
+## 9. The 10 most common prompt mistakes and how to fix each
 
 Below are high-frequency mistakes seen in production prompt design, each with a concrete fix.
 
@@ -678,7 +678,7 @@ It defines audience, structure, and prioritization, reducing variance and improv
 WHY IT WORKS:
 The example turns abstract advice into an immediate repair workflow you can reuse across prompt reviews.
 
-## 10. Practical prompt templates you can use today (400 words — 8 copy-paste templates)
+## 10. Practical prompt templates you can use today
 
 These templates are designed to be copied and adapted. Each one is model-agnostic and production-friendly.
 
@@ -918,6 +918,6 @@ Each change reduces ambiguity and increases consistency for decision-oriented ou
 WHY IT WORKS:
 This template turns prompt quality into a repeatable review process.
 
-## 11. What to learn next (100 words)
+## 11. What to learn next
 
 Once you are comfortable with fundamentals, learn prompt evaluation, retrieval grounding, tool integration, and workflow design. Build a small prompt test suite with real tasks and expected outputs. Track regressions every time you update prompts. Practice writing prompts for three modes: human-facing responses, structured outputs for software, and agent-style multi-step tasks. Then move into system design topics such as RAG, tool calling, and guardrails. The biggest leap comes from combining good prompts with good architecture. Prompt engineering is strongest when treated as part of a complete reliability loop: design, test, observe, and iterate.

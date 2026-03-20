@@ -11,7 +11,7 @@ featured: true
 
 This guide is written for builders who need practical answers, not framework marketing. You will see where each framework shines, where it hurts, and how to choose based on real constraints: complexity, team skill, observability, and production risk.
 
-## 1. Why agent frameworks exist — and when you don't need one (200 words)
+## 1. Why agent frameworks exist — and when you don't need one
 
 Agent frameworks exist because real AI applications are not single prompts anymore. Once you need memory, tools, retries, human-in-the-loop approvals, role specialization, or long-running workflows, plain chat calls become hard to manage. Frameworks give you reusable primitives: orchestration, state handling, tool integration, tracing, and control flow.
 
@@ -52,7 +52,7 @@ Short version:
 
 All four can be used with Claude, GPT-5.4, Gemini, and open-source models in practice, though some combinations require adapters/gateways (for example LiteLLM or provider-specific wrappers).
 
-## 3. LangGraph deep dive (400 words + minimal code example)
+## 3. LangGraph deep dive
 
 LangGraph is strongest when your agent is really a workflow engine: branching paths, retries, state transitions, durable checkpoints, and strict control over what happens next. If you are building a long-running or high-stakes system, this explicit graph model is a major advantage.
 
@@ -112,7 +112,7 @@ print(result["summary"])
 
 Why this matters: even this tiny graph gives explicit, inspectable transitions. As complexity grows, that clarity is often the difference between a maintainable system and a fragile one.
 
-## 4. CrewAI deep dive (400 words + minimal code example)
+## 4. CrewAI deep dive
 
 CrewAI is usually the fastest path from idea to production for business teams. Its role/task mental model maps well to how organizations already think: researcher, analyst, reviewer, writer, operator. You define agents with goals, assign tasks, and run a crew.
 
@@ -173,7 +173,7 @@ print(result)
 
 If your goal is "ship business automation soon," CrewAI is often the most practical first choice. Just pair it with strong evaluation and observability so speed does not become silent quality debt.
 
-## 5. AutoGen deep dive (300 words + note about Microsoft shifting focus)
+## 5. AutoGen deep dive
 
 AutoGen helped define modern conversation-based multi-agent patterns. It is still useful, especially for teams already running AutoGen workloads. But in 2026, the strategic context matters: Microsoft has shifted focus toward Microsoft Agent Framework, and migration guidance from AutoGen is now a first-class part of the official docs.
 
@@ -217,7 +217,7 @@ asyncio.run(main())
 
 Honest stance: AutoGen remains technically capable, but for new production systems, you should account for Microsoft's strategic shift before committing.
 
-## 6. OpenAI Agents SDK deep dive (300 words)
+## 6. OpenAI Agents SDK deep dive
 
 OpenAI Agents SDK replaced Swarm as OpenAI's modern lightweight agent orchestration layer. The design philosophy is simple: minimal abstractions, strong defaults, fast developer loop, clear handoffs, and built-in tracing.
 
@@ -268,7 +268,7 @@ asyncio.run(main())
 
 If your goal is to test and iterate quickly, OpenAI Agents SDK is one of the best starting points in 2026.
 
-## 7. Decision framework — how to choose (300 words with clear decision tree)
+## 7. Decision framework — how to choose
 
 Use this decision tree instead of choosing by popularity.
 
@@ -311,7 +311,7 @@ Additional filters:
 
 A good decision is rarely "best framework overall." It is "best framework for current constraints with acceptable migration risk."
 
-## 8. Common mistakes when building agents (200 words)
+## 8. Common mistakes when building agents
 
 Most failures come from system design mistakes, not framework bugs.
 
@@ -335,7 +335,6 @@ A practical checklist before production:
 
 Framework choice matters, but discipline matters more. A well-observed simple system outperforms a complex unobserved one almost every time.
 
-## 9. What to learn next (100 words)
+## 9. What to learn next
 
 After choosing a framework, learn three things in parallel: evaluation, observability, and safety controls. Build a small benchmark set of real tasks and track quality before/after every workflow change. Instrument every handoff and tool call so you can explain failures quickly. Add policy checks for sensitive actions and data boundaries. Then study long-running memory patterns and recovery strategies. If you are serious about production agents, the winning skill is not prompt cleverness. It is operational reliability: clear state, measurable quality, and controlled automation.
-

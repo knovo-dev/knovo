@@ -11,7 +11,7 @@ featured: true
 
 RAG in 2026 is no longer a demo pattern. It is core infrastructure for assistants, internal copilots, search-augmented workflows, and agent systems. This guide is designed to be implementation-first: clear architecture, practical tradeoffs, and code you can run with minimal adaptation.
 
-## 1. What is RAG and why it matters (200 words)
+## 1. What is RAG and why it matters
 
 Retrieval-Augmented Generation (RAG) is a pattern where a language model answers questions using external knowledge retrieved at runtime. Instead of relying only on model memory, you search your own corpus, pass relevant chunks to the model, and generate a grounded response. That single design decision changes everything: you can update knowledge without fine-tuning, cite sources, enforce data boundaries, and improve trust.
 
@@ -38,7 +38,7 @@ If context is insufficient, say so clearly."""
 
 If you master the pipeline behind this function, you can build reliable AI systems.
 
-## 2. RAG architecture overview — the full pipeline (300 words + diagram in text)
+## 2. RAG architecture overview — the full pipeline
 
 A production RAG system has two loops: indexing and query-time serving.
 
@@ -149,7 +149,7 @@ def timed(stage: str):
 #     chunks = retrieve(question)
 ```
 
-## 3. Step 1: Document loading and preprocessing (300 words + code)
+## 3. Step 1: Document loading and preprocessing
 
 Most RAG failures start before retrieval. If you ingest noisy, duplicated, or malformed text, even a strong retriever will return weak context. Document loading and preprocessing should be treated like data engineering, not boilerplate.
 
@@ -219,7 +219,7 @@ if __name__ == "__main__":
 
 This step directly impacts retrieval precision. Clean inputs reduce false matches, improve chunk quality, and cut wasted embedding/storage costs.
 
-## 4. Step 2: Chunking strategies — fixed, semantic, recursive (400 words + code)
+## 4. Step 2: Chunking strategies — fixed, semantic, recursive
 
 Chunking determines what retrieval can find. If chunks are too small, the model lacks context. If too large, retrieval returns broad but less relevant blocks. There is no universal chunk size. The best strategy depends on document type, question style, and context budget.
 
@@ -328,7 +328,7 @@ def grid_configs() -> List[ChunkConfig]:
 # Pair this with your retrieval evaluation harness and pick the best config.
 ```
 
-## 5. Step 3: Embedding models compared — OpenAI, Cohere, open-source (300 words + code)
+## 5. Step 3: Embedding models compared — OpenAI, Cohere, open-source
 
 Embeddings convert text into vectors for semantic search. Retrieval quality often depends more on embedding choice and chunk quality than on the generation model itself.
 
@@ -381,7 +381,7 @@ if __name__ == "__main__":
 
 There is no best embedding model in abstraction. The best one is the model that maximizes retrieval accuracy on your documents at acceptable cost and latency.
 
-## 6. Step 4: Vector databases compared — Pinecone, Weaviate, pgvector, Chroma (400 words)
+## 6. Step 4: Vector databases compared — Pinecone, Weaviate, pgvector, Chroma
 
 Your vector database choice should match operational constraints, not trends. All four options can work; they optimize different tradeoffs.
 
@@ -473,7 +473,7 @@ def query_knowledge_base(adapter: VectorAdapter, q: str) -> List[Document]:
 
 That small abstraction pays off when you migrate from local Chroma to managed Pinecone, or from one cloud vendor to another, without rewriting your full generation layer.
 
-## 7. Step 5: Retrieval strategies — similarity search, hybrid search, reranking (400 words + code)
+## 7. Step 5: Retrieval strategies — similarity search, hybrid search, reranking
 
 Retrieval is where production RAG quality is won or lost. A common anti-pattern is spending most effort on generation prompts while retrieval remains shallow. If wrong context enters the prompt, no prompt template can fully rescue output quality.
 
@@ -566,7 +566,7 @@ Return only the rewritten query."""
 
 For ambiguous questions, rewrite + hybrid retrieval + reranking is often far better than dense search alone.
 
-## 8. Step 6: Generation — prompt templates for RAG (300 words + code)
+## 8. Step 6: Generation — prompt templates for RAG
 
 Generation in RAG should be grounded, constrained, and explicit about uncertainty. A common failure mode is giving the model retrieved text but not forcing it to stay within that context.
 
@@ -646,7 +646,7 @@ def select_prompt(task: TaskType) -> str:
 
 Template routing makes your RAG layer easier to audit and evolve than one giant universal prompt.
 
-## 9. Step 7: Evaluating your RAG system with RAGAS (300 words + code)
+## 9. Step 7: Evaluating your RAG system with RAGAS
 
 If you do not evaluate RAG, you are guessing. User feedback is useful but too slow for iteration loops. RAGAS gives you repeatable metrics for retrieval and answer quality.
 
@@ -724,7 +724,7 @@ def save_eval_report(rows: list[dict], out_path: str = "rag_eval_report.csv") ->
 
 When you pair automatic metrics with targeted human review, RAG quality becomes measurable engineering work instead of subjective debate.
 
-## 10. Common RAG mistakes and how to fix them (300 words)
+## 10. Common RAG mistakes and how to fix them
 
 RAG failures are often systematic, not random. Here are practical mistakes and concrete fixes.
 
@@ -795,7 +795,7 @@ def classify_failure(has_answer_in_retrieved: bool, answer_grounded: bool) -> Fa
 
 This discipline is how high-performing teams keep RAG quality improving instead of oscillating.
 
-## 11. Advanced RAG — agentic RAG, multimodal RAG, GraphRAG (200 words)
+## 11. Advanced RAG — agentic RAG, multimodal RAG, GraphRAG
 
 Once baseline RAG is stable, advanced designs unlock bigger capabilities.
 
@@ -847,7 +847,7 @@ def merge_graph_and_vector_context(graph_facts: list[str], vector_docs: list[Doc
 
 That pattern gives most of the GraphRAG benefit before you commit to a heavy graph-first architecture.
 
-## 12. What to learn next (100 words)
+## 12. What to learn next
 
 After implementing this guide, focus on retrieval observability, prompt versioning, and continuous evaluation. Add query classification for better routing, then introduce adaptive top-k and dynamic reranking thresholds. Learn how to maintain index freshness automatically from your source systems. For enterprise deployments, prioritize access control, PII redaction, and audit logs. Study agentic orchestration only after your baseline RAG metrics are stable. The fastest path to expert-level RAG is iterative: measure, change one component, re-measure, and keep a rollback path for every experiment.
 
