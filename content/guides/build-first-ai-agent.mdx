@@ -1,0 +1,432 @@
+---
+title: "Build your first AI agent: step-by-step tutorial with LangGraph (2026)"
+description: "A complete tutorial for building your first AI agent in 2026 using LangGraph and Claude. Covers tools, memory, human-in-the-loop, and a full working research assistant."
+date: 2026-03-21
+lastVerified: 2026-03-21
+readTime: "18 min read"
+author: "Knovo Team"
+tags: ["AI agents", "LangGraph", "Claude", "tutorial", "beginners", "AI engineering"]
+featured: true
+---
+
+This tutorial builds a real AI agent from scratch. By the end, you will have a research assistant that can search the web, summarize findings, remember context across turns, and ask for human approval before taking actions.
+
+Install dependencies first:
+
+```bash
+pip install -U langgraph langchain langchain-anthropic duckduckgo-search python-dotenv
+```
+
+## 1. What is an AI agent and what can it actually do
+
+An AI agent is an LLM system that can:
+
+1. Decide what to do next.
+2. Use tools to gather data or take actions.
+3. Keep context and state over multiple turns.
+4. Follow control rules from your application.
+
+In simple terms: a chatbot answers once; an agent plans, uses tools, and iterates.
+
+## 2. The agent we are building: a research assistant that searches and summarises
+
+Our agent workflow:
+
+1. User asks a research question.
+2. Agent decides whether to use web search.
+3. Human approves tool execution.
+4. Agent runs search tool and reads results.
+5. Agent returns a concise summary with sources.
+6. Memory keeps thread context for follow-up questions.
+
+We will implement this in one file: `agent.py`.
+
+## 3. What you need: prerequisites and setup
+
+You need:
+
+1. Python 3.10+.
+2. Anthropic API key.
+3. Terminal access.
+
+Create a `.env` file:
+
+```bash
+ANTHROPIC_API_KEY=your_key_here
+# Keep default if unsure, update if Anthropic changes naming
+ANTHROPIC_MODEL=claude-sonnet-4-6
+```
+
+Project structure:
+
+```text
+your-project/
+  agent.py
+  .env
+```
+
+## 4. Step 1: Setting up your environment and API keys
+
+Create `agent.py` with this starter:
+
+```python
+from dotenv import load_dotenv
+import os
+from langchain_anthropic import ChatAnthropic
+
+load_dotenv()
+
+MODEL_NAME = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+if not API_KEY:
+    raise RuntimeError("Missing ANTHROPIC_API_KEY in environment.")
+
+llm = ChatAnthropic(
+    model=MODEL_NAME,
+    temperature=0.1,
+    max_tokens=900,
+)
+
+if __name__ == "__main__":
+    print(f"Loaded model: {MODEL_NAME}")
+```
+
+Run:
+
+```bash
+python agent.py
+```
+
+## 5. Step 2: Building the tool functions (web search, summarisation)
+
+Now add tool functions to `agent.py`:
+
+```python
+from dotenv import load_dotenv
+import os
+from duckduckgo_search import DDGS
+from langchain_anthropic import ChatAnthropic
+from langchain_core.tools import tool
+
+load_dotenv()
+MODEL_NAME = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+llm = ChatAnthropic(model=MODEL_NAME, temperature=0.1, max_tokens=900)
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web and return top 5 results with title + URL + snippet."""
+    rows = []
+    with DDGS() as ddgs:
+        for r in ddgs.text(query, max_results=5):
+            title = r.get("title", "No title")
+            href = r.get("href", "No URL")
+            body = r.get("body", "").strip()
+            rows.append(f"- {title}\n  URL: {href}\n  Snippet: {body}")
+    return "\n".join(rows) if rows else "No results found."
+
+@tool
+def summarize_text(text: str) -> str:
+    """Summarize text into concise bullet points with key takeaways."""
+    prompt = (
+        "Summarize the following research notes into:\n"
+        "1) 5 bullet points\n2) Key risks\n3) Actionable next steps\n\n"
+        f"Text:\n{text}"
+    )
+    return llm.invoke(prompt).content
+
+if __name__ == "__main__":
+    print(web_search.invoke({"query": "latest open-source LLM serving options"}))
+```
+
+## 6. Step 3: Creating the agent with LangGraph
+
+Replace `agent.py` with this full LangGraph agent:
+
+```python
+from dotenv import load_dotenv
+import os
+from duckduckgo_search import DDGS
+from typing import Literal
+
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.tools import tool
+from langgraph.graph import MessagesState, StateGraph, START, END
+from langgraph.prebuilt import ToolNode
+
+load_dotenv()
+
+MODEL_NAME = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+llm = ChatAnthropic(model=MODEL_NAME, temperature=0.1, max_tokens=900)
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web and return top 5 results."""
+    rows = []
+    with DDGS() as ddgs:
+        for r in ddgs.text(query, max_results=5):
+            rows.append(
+                f"- {r.get('title', 'No title')}\n"
+                f"  URL: {r.get('href', 'No URL')}\n"
+                f"  Snippet: {r.get('body', '').strip()}"
+            )
+    return "\n".join(rows) if rows else "No results found."
+
+@tool
+def summarize_text(text: str) -> str:
+    """Summarize text into bullets, risks, and next steps."""
+    prompt = (
+        "Summarize these notes as:\n"
+        "1) 5 bullets\n2) risks\n3) next steps\n\n"
+        f"{text}"
+    )
+    return llm.invoke(prompt).content
+
+TOOLS = [web_search, summarize_text]
+llm_with_tools = llm.bind_tools(TOOLS)
+tool_node = ToolNode(TOOLS)
+
+def assistant_node(state: MessagesState):
+    system = HumanMessage(
+        content=(
+            "You are a research assistant. Use tools when needed. "
+            "Cite source URLs from web_search results."
+        )
+    )
+    response = llm_with_tools.invoke([system] + state["messages"])
+    return {"messages": [response]}
+
+def route_after_assistant(state: MessagesState) -> Literal["tools", "__end__"]:
+    last = state["messages"][-1]
+    if isinstance(last, AIMessage) and last.tool_calls:
+        return "tools"
+    return "__end__"
+
+builder = StateGraph(MessagesState)
+builder.add_node("assistant", assistant_node)
+builder.add_node("tools", tool_node)
+builder.add_edge(START, "assistant")
+builder.add_conditional_edges("assistant", route_after_assistant, {"tools": "tools", "__end__": END})
+builder.add_edge("tools", "assistant")
+graph = builder.compile()
+
+if __name__ == "__main__":
+    question = "Research the latest best practices for semantic caching in LLM apps."
+    result = graph.invoke({"messages": [HumanMessage(content=question)]})
+    print(result["messages"][-1].content)
+```
+
+## 7. Step 4: Adding memory so the agent remembers context
+
+Update the graph compile and runner to use checkpoint memory:
+
+```python
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.messages import HumanMessage
+
+# Keep previous code unchanged above this section
+
+memory = MemorySaver()
+graph = builder.compile(checkpointer=memory)
+
+def ask(thread_id: str, text: str) -> str:
+    result = graph.invoke(
+        {"messages": [HumanMessage(content=text)]},
+        config={"configurable": {"thread_id": thread_id}},
+    )
+    return result["messages"][-1].content
+
+if __name__ == "__main__":
+    tid = "demo-user-1"
+    print(ask(tid, "Research top vector databases for RAG in 2026."))
+    print(ask(tid, "Now compare them in 3 bullets based on your previous findings."))
+```
+
+Memory now works per `thread_id`.
+
+## 8. Step 5: Adding human-in-the-loop approval before actions
+
+Add a gate node before tool execution. This is a simple and effective production control.
+
+```python
+from typing import Literal
+from langchain_core.messages import AIMessage, ToolMessage
+
+def approval_node(state: MessagesState):
+    last = state["messages"][-1]
+    if not isinstance(last, AIMessage) or not last.tool_calls:
+        return {"messages": []}
+
+    call = last.tool_calls[0]
+    tool_name = call["name"]
+    args = call.get("args", {})
+    print(f"\n[APPROVAL REQUIRED] Tool call -> {tool_name}({args})")
+    decision = input("Approve? (y/n): ").strip().lower()
+
+    if decision == "y":
+        return {"messages": []}
+
+    denial = ToolMessage(
+        content="Tool execution denied by human reviewer.",
+        tool_call_id=call["id"],
+    )
+    return {"messages": [denial]}
+
+def route_after_approval(state: MessagesState) -> Literal["tools", "assistant"]:
+    last = state["messages"][-1]
+    if isinstance(last, ToolMessage) and "denied" in last.content.lower():
+        return "assistant"
+    return "tools"
+
+# Graph wiring changes
+builder = StateGraph(MessagesState)
+builder.add_node("assistant", assistant_node)
+builder.add_node("approval", approval_node)
+builder.add_node("tools", tool_node)
+builder.add_edge(START, "assistant")
+builder.add_conditional_edges("assistant", route_after_assistant, {"tools": "approval", "__end__": END})
+builder.add_conditional_edges("approval", route_after_approval, {"tools": "tools", "assistant": "assistant"})
+builder.add_edge("tools", "assistant")
+```
+
+This ensures every tool action is reviewed before execution.
+
+## 9. Step 6: Running and testing your agent
+
+Use this complete final `agent.py`:
+
+```python
+from dotenv import load_dotenv
+import os
+from typing import Literal
+from duckduckgo_search import DDGS
+
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.tools import tool
+from langgraph.graph import MessagesState, StateGraph, START, END
+from langgraph.prebuilt import ToolNode
+from langgraph.checkpoint.memory import MemorySaver
+
+load_dotenv()
+MODEL_NAME = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+llm = ChatAnthropic(model=MODEL_NAME, temperature=0.1, max_tokens=900)
+
+@tool
+def web_search(query: str) -> str:
+    """Search the web and return top 5 results with URL snippets."""
+    rows = []
+    with DDGS() as ddgs:
+        for r in ddgs.text(query, max_results=5):
+            rows.append(
+                f"- {r.get('title', 'No title')}\n"
+                f"  URL: {r.get('href', 'No URL')}\n"
+                f"  Snippet: {r.get('body', '').strip()}"
+            )
+    return "\n".join(rows) if rows else "No results found."
+
+@tool
+def summarize_text(text: str) -> str:
+    """Summarize text into bullets, risks, and next steps."""
+    prompt = (
+        "Summarize these notes as:\n"
+        "1) 5 bullets\n2) risks\n3) next steps\n\n"
+        f"{text}"
+    )
+    return llm.invoke(prompt).content
+
+TOOLS = [web_search, summarize_text]
+llm_with_tools = llm.bind_tools(TOOLS)
+tool_node = ToolNode(TOOLS)
+
+def assistant_node(state: MessagesState):
+    sys = HumanMessage(
+        content=(
+            "You are a careful research assistant. "
+            "Use tools when needed and cite URLs from search results."
+        )
+    )
+    response = llm_with_tools.invoke([sys] + state["messages"])
+    return {"messages": [response]}
+
+def route_after_assistant(state: MessagesState) -> Literal["approval", "__end__"]:
+    last = state["messages"][-1]
+    if isinstance(last, AIMessage) and last.tool_calls:
+        return "approval"
+    return "__end__"
+
+def approval_node(state: MessagesState):
+    last = state["messages"][-1]
+    if not isinstance(last, AIMessage) or not last.tool_calls:
+        return {"messages": []}
+
+    call = last.tool_calls[0]
+    print(f"\n[APPROVAL REQUIRED] {call['name']} args={call.get('args', {})}")
+    decision = input("Approve tool call? (y/n): ").strip().lower()
+    if decision == "y":
+        return {"messages": []}
+
+    denied = ToolMessage(content="Tool execution denied by human reviewer.", tool_call_id=call["id"])
+    return {"messages": [denied]}
+
+def route_after_approval(state: MessagesState) -> Literal["tools", "assistant"]:
+    last = state["messages"][-1]
+    if isinstance(last, ToolMessage) and "denied" in last.content.lower():
+        return "assistant"
+    return "tools"
+
+builder = StateGraph(MessagesState)
+builder.add_node("assistant", assistant_node)
+builder.add_node("approval", approval_node)
+builder.add_node("tools", tool_node)
+builder.add_edge(START, "assistant")
+builder.add_conditional_edges("assistant", route_after_assistant, {"approval": "approval", "__end__": END})
+builder.add_conditional_edges("approval", route_after_approval, {"tools": "tools", "assistant": "assistant"})
+builder.add_edge("tools", "assistant")
+
+memory = MemorySaver()
+graph = builder.compile(checkpointer=memory)
+
+def chat(thread_id: str, text: str) -> str:
+    out = graph.invoke(
+        {"messages": [HumanMessage(content=text)]},
+        config={"configurable": {"thread_id": thread_id}},
+    )
+    return out["messages"][-1].content
+
+if __name__ == "__main__":
+    thread_id = "research-demo-1"
+    print("Agent ready. Type 'exit' to stop.")
+    while True:
+        user_text = input("\nYou: ").strip()
+        if user_text.lower() in {"exit", "quit"}:
+            break
+        answer = chat(thread_id, user_text)
+        print("\nAgent:", answer)
+```
+
+Run:
+
+```bash
+python agent.py
+```
+
+Test prompts:
+
+1. `Research top three AI observability tools and summarize differences.`
+2. `Now only give me the tradeoffs for a small startup budget.`
+3. `Give me links you used.`
+
+## 10. What to build next: ideas to extend your agent
+
+Great next upgrades:
+
+1. Add structured output with JSON schema validation.
+2. Replace terminal approval with a web dashboard approval queue.
+3. Add long-term memory in a database instead of in-memory checkpointing.
+4. Add evaluation traces with Langfuse or LangSmith.
+5. Add policy filters for unsafe requests.
+6. Add multi-agent routing for planning + retrieval + verification.
+
+If you build these in order, you move from a beginner tutorial agent to a production-ready agent architecture.
