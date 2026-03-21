@@ -3,7 +3,7 @@ import { getGuideSlugs } from "@/lib/mdx";
 import { absoluteUrl } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ["", "/guides", "/about"].map((route) => ({
+  const routes = ["", "/guides", "/about", "/privacy"].map((route) => ({
     url: absoluteUrl(route),
     lastModified: new Date(),
   }));
