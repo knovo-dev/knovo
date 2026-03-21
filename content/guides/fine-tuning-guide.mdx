@@ -1,0 +1,492 @@
+---
+title: "Fine-tuning LLMs: complete guide to LoRA, QLoRA, and when to fine-tune (2026)"
+description: "A practical guide to fine-tuning large language models in 2026. Covers LoRA, QLoRA, dataset creation, and an honest framework for when fine-tuning beats RAG."
+date: 2026-03-21
+lastVerified: 2026-03-21
+readTime: "16 min read"
+author: "Knovo Team"
+tags: ["fine-tuning", "LoRA", "QLoRA", "LLMs", "Unsloth", "AI engineering"]
+featured: true
+---
+
+Fine-tuning can be a force multiplier, or a very expensive distraction. This guide is intentionally practical: you will get a decision framework, runnable Unsloth code, and blunt advice on when **not** to train.
+
+## 1. What is fine-tuning and when should you actually do it
+
+Fine-tuning means updating model weights on your own examples so the model learns your style, task behavior, or domain patterns. It is different from prompt engineering, where you only change instructions, and different from RAG, where you retrieve external context at runtime.
+
+You should fine-tune when you need **consistent behavior** that prompts alone cannot reliably enforce. Common reasons:
+
+1. You run the same high-volume task thousands of times and need stable output format.
+2. You need domain-specific writing style, tone, or policy behavior.
+3. You want to reduce prompt size and inference cost by moving behavior into weights.
+4. You have labeled examples that clearly represent what “good” looks like.
+
+You should **not** fine-tune first when:
+
+1. Your problem is mostly knowledge freshness. Use RAG.
+2. You have fewer than a few hundred quality examples. Improve data first.
+3. Your baseline prompt quality is weak. Fix prompts and evaluation first.
+4. You need traceable citations from source docs. Use RAG or hybrid approaches.
+
+Practical rule: if you cannot write a clear evaluation set and success criteria before training, do not fine-tune yet.
+
+## 2. Fine-tuning vs RAG vs prompt engineering — honest decision framework
+
+Most teams should treat prompt engineering, RAG, and fine-tuning as a sequence, not competitors.
+
+Start with this decision flow:
+
+1. Can a well-designed prompt solve it with acceptable reliability and cost?
+2. If not, is the missing piece external knowledge that changes frequently?
+3. If not, do you have high-quality examples of desired behavior?
+4. If yes, fine-tune.
+
+### What each method is best at
+
+Prompt engineering:
+
+1. Fastest iteration speed.
+2. Lowest setup cost.
+3. Great for formatting, role behavior, and instruction clarity.
+
+RAG:
+
+1. Best for up-to-date or private knowledge.
+2. Strongest for source-grounded answers.
+3. Easier to update than retraining.
+
+Fine-tuning:
+
+1. Best for stable task behavior and style.
+2. Strong for classification, extraction, transformation, and policy-compliant outputs.
+3. Useful when prompts are large and repetitive at scale.
+
+### Honest outcomes
+
+1. Fine-tuning does not magically fix bad data.
+2. RAG does not guarantee reasoning quality if retrieval is poor.
+3. Prompt engineering alone often degrades under edge cases unless you evaluate continuously.
+
+In production, many winning systems are hybrid:
+
+1. Fine-tune for behavior and format consistency.
+2. Use RAG for dynamic facts.
+3. Use prompt templates as orchestration glue.
+
+## 3. Types of fine-tuning: full fine-tuning, LoRA, QLoRA — when to use each
+
+### Full fine-tuning
+
+You update all model parameters.
+
+Use it when:
+
+1. You control serious GPU budget and ML ops maturity.
+2. You need maximum adaptation depth on a specific base model.
+3. You are building a long-lived, proprietary model asset.
+
+Avoid it when:
+
+1. Budget is constrained.
+2. You need quick experiments.
+3. You only need task-style adaptation.
+
+### LoRA
+
+LoRA trains low-rank adapter matrices instead of all weights.
+
+Use it when:
+
+1. You want strong quality-to-cost ratio.
+2. You need fast iteration.
+3. You want easy adapter swapping per task/customer.
+
+LoRA is the practical default for most product teams.
+
+### QLoRA
+
+QLoRA combines quantized base weights (commonly 4-bit) with LoRA adapters.
+
+Use it when:
+
+1. GPU memory is limited.
+2. You still want competitive adaptation quality.
+3. You need affordable experimentation on smaller hardware.
+
+Tradeoff: QLoRA usually trains slower than pure full-precision LoRA per step, but it unlocks training on far less VRAM.
+
+## 4. Step-by-step: fine-tuning with LoRA using Unsloth (Python code)
+
+Unsloth is optimized for efficient LoRA/QLoRA workflows and is widely used for practical fine-tuning pipelines.
+
+### Install dependencies
+
+```bash
+pip install -U unsloth transformers datasets trl accelerate peft bitsandbytes
+```
+
+### Prepare a supervised chat dataset
+
+Create `data/train.jsonl`:
+
+```json
+{"instruction":"Classify sentiment","input":"I love this product","output":"positive"}
+{"instruction":"Classify sentiment","input":"This is frustrating","output":"negative"}
+```
+
+### Train with LoRA
+
+```python
+import os
+from datasets import load_dataset
+from unsloth import FastLanguageModel
+from trl import SFTTrainer
+from transformers import TrainingArguments
+
+MAX_SEQ_LENGTH = 2048
+MODEL_NAME = "unsloth/Meta-Llama-3.1-8B-bnb-4bit"  # replace with your chosen base
+OUTPUT_DIR = "outputs/lora-sentiment"
+
+def format_example(example):
+    # Chat-style supervision format.
+    prompt = (
+        "### Instruction:\n"
+        f"{example['instruction']}\n\n"
+        "### Input:\n"
+        f"{example['input']}\n\n"
+        "### Response:\n"
+        f"{example['output']}"
+    )
+    return {"text": prompt}
+
+def main():
+    # 1) Load quantized base model
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=MODEL_NAME,
+        max_seq_length=MAX_SEQ_LENGTH,
+        dtype=None,
+        load_in_4bit=True,
+    )
+
+    # 2) Attach LoRA adapters
+    model = FastLanguageModel.get_peft_model(
+        model,
+        r=16,
+        lora_alpha=32,
+        lora_dropout=0.05,
+        bias="none",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        use_gradient_checkpointing="unsloth",
+        random_state=42,
+    )
+
+    # 3) Load and format dataset
+    ds = load_dataset("json", data_files={"train": "data/train.jsonl"})["train"]
+    ds = ds.map(format_example, remove_columns=ds.column_names)
+
+    # 4) Configure trainer
+    trainer = SFTTrainer(
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=ds,
+        dataset_text_field="text",
+        max_seq_length=MAX_SEQ_LENGTH,
+        packing=True,
+        args=TrainingArguments(
+            output_dir=OUTPUT_DIR,
+            per_device_train_batch_size=2,
+            gradient_accumulation_steps=8,
+            warmup_ratio=0.03,
+            num_train_epochs=3,
+            learning_rate=2e-4,
+            logging_steps=10,
+            save_steps=200,
+            bf16=True,
+            optim="adamw_torch",
+            lr_scheduler_type="cosine",
+            weight_decay=0.01,
+            report_to="none",
+        ),
+    )
+
+    trainer.train()
+
+    # 5) Save adapter + tokenizer
+    trainer.model.save_pretrained(OUTPUT_DIR)
+    tokenizer.save_pretrained(OUTPUT_DIR)
+    print(f"Saved LoRA adapter to {OUTPUT_DIR}")
+
+if __name__ == "__main__":
+    os.makedirs("outputs", exist_ok=True)
+    main()
+```
+
+### Inference with your adapter
+
+```python
+from unsloth import FastLanguageModel
+from peft import PeftModel
+from transformers import TextStreamer
+
+BASE_MODEL = "unsloth/Meta-Llama-3.1-8B-bnb-4bit"
+ADAPTER_PATH = "outputs/lora-sentiment"
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name=BASE_MODEL,
+    max_seq_length=2048,
+    dtype=None,
+    load_in_4bit=True,
+)
+model = PeftModel.from_pretrained(model, ADAPTER_PATH)
+FastLanguageModel.for_inference(model)
+
+prompt = "### Instruction:\nClassify sentiment\n\n### Input:\nThis update is fantastic\n\n### Response:\n"
+inputs = tokenizer([prompt], return_tensors="pt").to(model.device)
+streamer = TextStreamer(tokenizer)
+_ = model.generate(**inputs, streamer=streamer, max_new_tokens=30, temperature=0.2)
+```
+
+If your exact model ID changes, keep the workflow but swap model names and validate with a small smoke set before long training runs.
+
+## 5. Dataset creation: what makes a good fine-tuning dataset
+
+Your dataset quality matters more than clever hyperparameter tweaks.
+
+### Characteristics of strong training data
+
+1. Clear task boundaries.
+2. Consistent target style.
+3. Realistic user inputs, including messy edge cases.
+4. Balanced labels/outcomes where applicable.
+5. Deduplicated and decontaminated examples.
+
+### Dataset design checklist
+
+1. Define exactly what success means for each sample.
+2. Keep instruction phrasing consistent unless variation is part of the task.
+3. Add hard negatives and near-miss cases.
+4. Use a strict train/validation split.
+5. Track data version in Git or object storage metadata.
+
+### Simple validation script
+
+```python
+import json
+from pathlib import Path
+
+def validate_jsonl(path: str):
+    required = {"instruction", "input", "output"}
+    total = 0
+    bad = 0
+
+    with Path(path).open("r", encoding="utf-8") as f:
+        for i, line in enumerate(f, start=1):
+            total += 1
+            try:
+                row = json.loads(line)
+                missing = required - set(row.keys())
+                if missing:
+                    bad += 1
+                    print(f"Line {i}: missing fields {missing}")
+                for key in required:
+                    if not isinstance(row[key], str) or not row[key].strip():
+                        bad += 1
+                        print(f"Line {i}: invalid {key}")
+                        break
+            except json.JSONDecodeError:
+                bad += 1
+                print(f"Line {i}: invalid JSON")
+
+    print(f"Checked {total} rows, issues: {bad}")
+
+if __name__ == "__main__":
+    validate_jsonl("data/train.jsonl")
+```
+
+### Honest guidance
+
+If your dataset is tiny and synthetic, do not expect robust generalization. Build from real production traces, support tickets, analyst outputs, and human-reviewed labels whenever possible.
+
+## 6. Training configuration: key hyperparameters explained simply
+
+You do not need to overcomplicate training configs. Start with a safe baseline and tune one variable at a time.
+
+### Core hyperparameters
+
+1. `learning_rate`: Too high causes unstable behavior; too low underfits.
+2. `batch_size` and `gradient_accumulation_steps`: Control effective batch size and stability.
+3. `num_train_epochs`: More is not always better; watch validation loss.
+4. `lora_r`: Adapter capacity. Higher can learn more but risks overfitting.
+5. `lora_alpha` and `lora_dropout`: Control LoRA update magnitude and regularization.
+6. `max_seq_length`: Must match task context needs; larger costs more memory.
+
+### Strong starting point for many tasks
+
+1. Learning rate around `1e-4` to `2e-4` for LoRA SFT.
+2. LoRA rank `8` to `32`.
+3. 2–4 epochs with early stopping based on validation.
+4. Use warmup and cosine/linear decay.
+
+### Minimal hyperparameter sweep
+
+```python
+import itertools
+
+grid = {
+    "learning_rate": [1e-4, 2e-4],
+    "lora_r": [8, 16, 32],
+    "num_train_epochs": [2, 3],
+}
+
+def iter_configs(grid_dict):
+    keys = grid_dict.keys()
+    values = grid_dict.values()
+    for combo in itertools.product(*values):
+        yield dict(zip(keys, combo))
+
+for cfg in iter_configs(grid):
+    print(cfg)
+```
+
+Track each run with dataset version, config, and evaluation metrics. Without experiment tracking, you will not know why quality moved.
+
+## 7. Evaluating your fine-tuned model
+
+Evaluation is where most fine-tuning efforts fail. Teams train, sample a few outputs, and declare success. That is not enough.
+
+### Required evaluation layers
+
+1. Automatic task metrics.
+2. Human review on real user cases.
+3. Regression checks against baseline model.
+4. Safety and policy checks.
+
+### Example automatic evaluation loop
+
+```python
+import json
+from typing import List, Dict
+
+def exact_match(pred: str, gold: str) -> float:
+    return float(pred.strip().lower() == gold.strip().lower())
+
+def evaluate_predictions(rows: List[Dict[str, str]]) -> Dict[str, float]:
+    # Each row: {"prediction": "...", "target": "..."}
+    if not rows:
+        return {"exact_match": 0.0}
+    score = sum(exact_match(r["prediction"], r["target"]) for r in rows) / len(rows)
+    return {"exact_match": score}
+
+if __name__ == "__main__":
+    # Example file from your inference script outputs.
+    with open("eval/preds.json", "r", encoding="utf-8") as f:
+        rows = json.load(f)
+    metrics = evaluate_predictions(rows)
+    print(metrics)
+```
+
+### Compare against baseline
+
+Do not evaluate your fine-tuned model in isolation. Always compare:
+
+1. Base model + strong prompt.
+2. Base model + RAG (if applicable).
+3. Fine-tuned model.
+
+If fine-tuning does not beat baseline in a meaningful, measurable way, do not ship it.
+
+## 8. Common fine-tuning mistakes and how to avoid them
+
+1. Fine-tuning before prompt and RAG baselines.
+Fix: Establish a clear baseline first.
+
+2. Training on noisy synthetic data.
+Fix: Use curated real-world examples and human QA.
+
+3. No validation split.
+Fix: Keep strict holdout data and never train on it.
+
+4. Overfitting with too many epochs.
+Fix: Watch validation metrics and stop early.
+
+5. Ignoring failure analysis.
+Fix: Label error categories and patch dataset gaps.
+
+6. Confusing style adaptation with factual knowledge.
+Fix: Use fine-tuning for behavior; use RAG for changing facts.
+
+7. No rollback strategy.
+Fix: Version adapters and keep deployment toggles.
+
+8. Shipping without safety checks.
+Fix: Evaluate refusals, sensitive content behavior, and policy compliance.
+
+Practical deployment pattern:
+
+1. Canary 5–10% traffic.
+2. Compare KPIs and error types.
+3. Roll forward only if quality and safety both improve.
+
+## 9. Fine-tuning costs: realistic estimates for 2026
+
+Costs depend on model size, sequence length, epochs, and infrastructure. There is no universal number that is accurate for every team.
+
+### What drives cost
+
+1. GPU type and hourly rate.
+2. Training duration.
+3. Dataset token count.
+4. Number of experiment runs.
+5. Evaluation and human review effort.
+
+### Practical budget ranges for LoRA/QLoRA workflows
+
+These are planning ranges, not guarantees:
+
+1. Small pilot (single task, moderate data): low hundreds of USD.
+2. Multi-run tuning with careful eval: high hundreds to low thousands.
+3. Team-scale program with repeated retrains and QA: can grow quickly if uncontrolled.
+
+### Back-of-envelope estimator
+
+```python
+def estimate_training_cost(
+    gpu_hourly_rate: float,
+    training_hours: float,
+    num_runs: int = 1,
+    eval_overhead_ratio: float = 0.2,
+) -> float:
+    # eval_overhead_ratio includes validation runs, experiment retries, and tooling overhead.
+    base = gpu_hourly_rate * training_hours * num_runs
+    total = base * (1 + eval_overhead_ratio)
+    return round(total, 2)
+
+if __name__ == "__main__":
+    usd = estimate_training_cost(
+        gpu_hourly_rate=2.5,
+        training_hours=8,
+        num_runs=4,
+        eval_overhead_ratio=0.35,
+    )
+    print(f"Estimated total cost: ${usd}")
+```
+
+### Cost control tips that actually work
+
+1. Start with smaller base models and prove value.
+2. Use QLoRA when memory is constrained.
+3. Run short pilot epochs before full runs.
+4. Kill experiments with weak early metrics.
+5. Invest in dataset quality to reduce retraining churn.
+
+## 10. What to learn next
+
+After this guide, focus on three skills: evaluation design, data curation pipelines, and deployment safety. Learn adapter merging strategies, model quantization for inference, and experiment tracking with clear rollback paths. Build a repeatable lifecycle: collect failures, relabel data, retrain, reevaluate, and redeploy gradually. Fine-tuning becomes a competitive advantage only when it is part of a disciplined system, not a one-off training run.
+
+Recommended next sequence:
+
+1. Build a robust eval suite for your core task.
+2. Add automated data quality checks in CI.
+3. Create a canary deployment pipeline for adapter releases.
+4. Combine fine-tuned behavior with RAG for dynamic knowledge.
