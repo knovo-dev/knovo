@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 
 export const metadata = createMetadata({
   title: "About Knovo",
-  description: "Knovo is a practical AI knowledge hub built by Sudheer Patibandla to make AI concepts learnable, testable, and immediately usable.",
+  description:
+    "Knovo is a practical AI knowledge hub built by Sudheer Patibandla to make AI concepts learnable, testable, and immediately usable.",
   path: "/about",
 });
 
@@ -17,28 +18,29 @@ export default function AboutPage() {
           Built for AI builders, by an AI builder
         </h1>
         <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
-          Knovo exists because the best AI knowledge was scattered, stale, and impossible
-          to act on. We are fixing that.
+          Knovo exists because the best AI knowledge was scattered, stale, and impossible to
+          act on. We are fixing that.
         </p>
       </section>
 
       <section className="mt-14">
-        <h2 className="text-2xl font-semibold tracking-tight">The problem we solve</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">The problem</h2>
         <div className="mt-6 space-y-5 text-base leading-7 text-muted-foreground">
           <p>
-            AI knowledge is scattered across arXiv, Discord, Reddit, and GitHub. Builders
-            have to piece together critical concepts from dozens of places, with no single
-            trustworthy source that is consistently practical.
+            AI knowledge is scattered across arxiv, Discord, Reddit, GitHub, and a hundred
+            documentation sites. There is no single trustworthy source that covers everything
+            — so every developer wastes hours every week just finding reliable information.
           </p>
           <p>
-            Most AI guides are written once and never updated. You cannot easily tell
-            whether what you are learning is current, deprecated, or no longer reliable for
-            production systems.
+            Most guides are written once and forgotten. Models change weekly. Prices change
+            monthly. Frameworks release breaking updates. But the articles stay the same.
+            You cannot tell if you are learning current best practice or outdated advice from
+            two years ago.
           </p>
           <p>
-            Reading about AI and being able to do AI are completely separate experiences.
-            Most content explains ideas, but very little bridges the gap from understanding
-            to implementation.
+            Reading about AI and being able to DO AI are completely separate experiences.
+            Every article ends with theory. Nobody puts a live, testable playground inside
+            the guide itself — where you can run the example the moment you read it.
           </p>
         </div>
       </section>
@@ -46,25 +48,32 @@ export default function AboutPage() {
       <section className="mt-14">
         <h2 className="text-2xl font-semibold tracking-tight">Our approach</h2>
         <ul className="mt-6 space-y-4 text-base text-muted-foreground">
-          <li>Every article has a Last Verified date.</li>
-          <li>Deep guides only — no thin content, no AI-generated fluff.</li>
-          <li>Practical first — every concept comes with working code.</li>
-          <li>Free forever — all articles always free, revenue from tools.</li>
+          <li>
+            Every article has a Last Verified date — so you always know how fresh the
+            information is
+          </li>
+          <li>
+            Deep guides only — no thin summaries, no AI-generated fluff, no content written
+            for SEO bots
+          </li>
+          <li>
+            Practical first — every concept comes with working code you can run immediately
+          </li>
+          <li>
+            Free forever — all articles are always free. Revenue comes from tools, not
+            paywalled content.
+          </li>
         </ul>
       </section>
 
       <section className="mt-14">
         <h2 className="text-2xl font-semibold tracking-tight">The founder</h2>
-        <div className="mt-6 space-y-3 text-base text-muted-foreground">
+        <div className="mt-6 space-y-4 text-base text-muted-foreground">
           <p>
-            <span className="font-medium text-foreground">Name:</span> Sudheer Patibandla
-          </p>
-          <p>
-            <span className="font-medium text-foreground">Location:</span> India
-          </p>
-          <p>
-            <span className="font-medium text-foreground">Mission:</span> Building Knovo to
-            be the world&apos;s most complete AI knowledge hub
+            Knovo is built by Sudheer Patibandla, an independent builder from India. After
+            spending too many hours hunting for reliable, up-to-date AI knowledge across
+            dozens of fragmented sources, he decided to build the resource he always wished
+            existed.
           </p>
           <p>
             <span className="font-medium text-foreground">Contact:</span>{" "}
@@ -78,15 +87,15 @@ export default function AboutPage() {
       <section className="mt-14">
         <h2 className="text-2xl font-semibold tracking-tight">What is coming</h2>
         <ul className="mt-6 space-y-4 text-base text-muted-foreground">
-          <li>Live AI playground in every article</li>
-          <li>Prompt debugger — find out why your prompt failed</li>
-          <li>Personalized learning paths</li>
-          <li>Community Q&amp;A</li>
+          <li>Live AI playground embedded in every article</li>
+          <li>Prompt debugger — find out exactly why your prompt failed</li>
+          <li>Personalized learning paths from beginner to production</li>
+          <li>Community Q&amp;A that becomes permanent site knowledge</li>
         </ul>
       </section>
 
       <section className="mt-16 rounded-xl border border-border bg-card/50 p-6 sm:p-8">
-        <h2 className="text-2xl font-semibold tracking-tight">Ready to build?</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">Start learning</h2>
         <p className="mt-3 text-muted-foreground">
           Start with a guide and build something real today.
         </p>
