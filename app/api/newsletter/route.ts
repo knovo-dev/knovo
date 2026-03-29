@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
@@ -13,6 +12,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.contacts.create({
       email,
       unsubscribed: false,
