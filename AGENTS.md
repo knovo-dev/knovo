@@ -28,23 +28,15 @@ This file is read automatically by Codex and any AI agent working on this projec
 
 ---
 
-## Review Queue
+## Review Mechanism
 
-> Claude updates this section after every push that needs Codex review.
-> Codex: read each item, review the commit or files listed, leave feedback as a comment or update this file.
+Claude invokes Codex directly via CLI after every significant push:
 
-### Pending Reviews
+```bash
+npx @openai/codex review --commit <SHA> --title "description of change"
+```
 
-| # | Commit | Files Changed | What to Review |
-|---|---|---|---|
-| 1 | `3c8f0737` | `app/api/newsletter/route.ts`, `package.json` | Resend SDK integration — check correctness, error handling, security |
-| 2 | `349337e6` | `app/api/newsletter/route.ts` | Fix: Resend client moved inside handler — verify this is the right pattern |
-
-### Completed Reviews
-
-_None yet._
-
----
+Codex review output appears in the Codex UI chat. Claude reads the output and acts on any flagged issues before proceeding to the next task.
 
 ## Task Queue
 
