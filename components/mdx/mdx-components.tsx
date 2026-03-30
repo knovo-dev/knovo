@@ -2,6 +2,13 @@ import type { MDXComponents } from "mdx/types";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import {
+  TokenizerDiagram,
+  TransformerDiagram,
+  AttentionDiagram,
+  TemperatureDiagram,
+  ContextWindowDiagram,
+} from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
   return input
@@ -54,4 +61,9 @@ export const mdxComponents: MDXComponents = {
     );
   },
   Badge,
+  TokenizerDiagram,
+  TransformerDiagram,
+  AttentionDiagram,
+  TemperatureDiagram,
+  ContextWindowDiagram,
 };

@@ -42,6 +42,8 @@ Why tokenizers exist:
 3. Character-level tokenization is flexible but inefficient because sequences become too long.
 4. Subword tokenization is the practical middle ground.
 
+<TokenizerDiagram />
+
 This is why the same paragraph can become different token counts on different model families. "Short in characters" does not always mean "cheap in tokens." A compact JSON object with repetitive keys can sometimes tokenize efficiently. A seemingly simple string full of IDs, URLs, or mixed languages may tokenize badly.
 
 ### Why tokenisation matters for prompting
@@ -131,6 +133,8 @@ Use this one:
 
 That loop repeats until generation stops.
 
+<TransformerDiagram />
+
 ### A practical mental model for layers
 
 Early layers often capture local patterns: syntax, punctuation, short-range phrase structure, code formatting clues.
@@ -188,6 +192,8 @@ Transformers use multiple attention heads. You can think of each head as a diffe
 This is not magic. It is a practical design choice that lets the model capture different kinds of dependencies at the same time.
 
 For builders, the actionable takeaway is simple: models can track multiple patterns at once, but they still benefit from clean prompts. Multi-head attention is a strength, not an excuse for messy inputs.
+
+<AttentionDiagram />
 
 ### A tiny attention intuition demo in Python
 
@@ -379,6 +385,8 @@ This means:
 
 If you raise both temperature and top-p, you usually get more varied output. If you lower both, you get more conservative output.
 
+<TemperatureDiagram />
+
 ### Practical example: simulate temperature effects
 
 This Python example shows how temperature reshapes a distribution. It does not call an API. It just makes the math visible.
@@ -472,6 +480,8 @@ A context window is the maximum number of tokens the model can process in a sing
 5. Tool results
 6. Prior conversation history still included in the prompt
 7. The model's own response budget
+
+<ContextWindowDiagram />
 
 Builders often focus on the advertised headline number: `128k`, `200k`, or more. But the usable context is always smaller than the headline because you need room for the output and because prompt quality degrades if you stuff the window with noise.
 
