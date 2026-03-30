@@ -6,10 +6,12 @@ import { Search, X, FileText } from "lucide-react";
 import { liteClient as algoliasearch } from "algoliasearch/lite";
 import { cn } from "@/lib/utils";
 
-const client = algoliasearch(
-  process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
-  process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY!
-);
+function getClient() {
+  return algoliasearch(
+    process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
+    process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY!
+  );
+}
 
 interface Hit {
   objectID: string;
@@ -53,7 +55,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
   // Search as user types
   useEffect(() => {
     if (!query.trim()) { setHits([]); return; }
-    client
+    getClient()
       .search({ requests: [{ indexName: "knovo_articles", query, hitsPerPage: 6 }] })
       .then((res) => { setHits((res.results[0] as { hits: Hit[] }).hits); setSelected(0); })
       .catch(() => setHits([]));
