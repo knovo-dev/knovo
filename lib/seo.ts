@@ -8,7 +8,7 @@ export const siteConfig = {
   tagline:
     "Deep, practical, always-updated guides on AI, LLMs, prompt engineering, RAG, agents, fine-tuning, and everything AI-related.",
   url: siteUrl,
-  ogImage: `${siteUrl}/og?title=Knovo`,
+  ogImage: `${siteUrl}/api/og?title=Knovo`,
 };
 
 export function absoluteUrl(path = "") {
