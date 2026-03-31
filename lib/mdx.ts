@@ -169,3 +169,14 @@ export function getNextGuide(slug: string) {
 
   return guides[currentIndex + 1];
 }
+
+export function getRelatedGuides(slug: string, tags: string[], limit = 3) {
+  const all = getGuides().filter((g) => g.slug !== slug);
+  const scored = all.map((g) => ({
+    ...g,
+    score: g.tags.filter((t) => tags.includes(t)).length,
+  }));
+  return scored
+    .sort((a, b) => b.score - a.score || +new Date(b.date) - +new Date(a.date))
+    .slice(0, limit);
+}

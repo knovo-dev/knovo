@@ -3,11 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { ReadingProgress } from "@/components/reading-progress";
-import { ShareButtons } from "@/components/share-buttons";
 import { Sidebar } from "@/components/layout/sidebar";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { getCompiledGuide, getGuideSlugs, getNextGuide } from "@/lib/mdx";
+import { ArticleHero } from "@/components/article-hero";
+import { RelatedArticles } from "@/components/related-articles";
+import { getCompiledGuide, getGuideSlugs, getRelatedGuides } from "@/lib/mdx";
 import { absoluteUrl, createMetadata } from "@/lib/seo";
 
 type GuidePageProps = {
@@ -41,7 +40,7 @@ export default async function GuidePage({ params }: GuidePageProps) {
 
   try {
     const guide = await getCompiledGuide(slug);
-    const nextGuide = getNextGuide(slug);
+    const relatedGuides = getRelatedGuides(slug, guide.tags);
     const url = absoluteUrl(`/guides/${slug}`);
     const jsonLd = {
       "@context": "https://schema.org",
@@ -83,38 +82,23 @@ export default async function GuidePage({ params }: GuidePageProps) {
 
           <div className="mt-8 grid gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
             <article className="min-w-0">
-              <header className="border-b border-border pb-8">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge>Last verified {guide.lastVerified}</Badge>
-                  {guide.updatedMonthly ? <Badge className="border-accent/30 text-accent">Updated monthly</Badge> : null}
-                </div>
-                <h1 className="mt-5 max-w-4xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-                  {guide.title}
-                </h1>
-                <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">{guide.description}</p>
-                <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <span>By {guide.author}</span>
-                  <span>{guide.date}</span>
-                  <span>{guide.readTime}</span>
-                </div>
-                <div className="mt-6">
-                  <ShareButtons title={guide.title} url={url} />
-                </div>
-              </header>
+              <ArticleHero
+                title={guide.title}
+                description={guide.description}
+                author={guide.author}
+                date={guide.date}
+                lastVerified={guide.lastVerified}
+                readTime={guide.readTime}
+                tags={guide.tags}
+                updatedMonthly={guide.updatedMonthly}
+                url={url}
+              />
 
               <div className="prose prose-slate mt-10 max-w-none dark:prose-invert">
                 {guide.content}
               </div>
 
-              {nextGuide ? (
-                <Card className="mt-12 p-6">
-                  <p className="text-sm font-medium text-accent">Next article</p>
-                  <Link href={`/guides/${nextGuide.slug}`} className="mt-2 block text-2xl font-semibold tracking-tight">
-                    {nextGuide.title}
-                  </Link>
-                  <p className="mt-2 text-sm text-muted-foreground">{nextGuide.description}</p>
-                </Card>
-              ) : null}
+              <RelatedArticles guides={relatedGuides} />
             </article>
 
             <Sidebar headings={guide.headings} />

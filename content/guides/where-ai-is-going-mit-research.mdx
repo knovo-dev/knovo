@@ -1,0 +1,240 @@
+---
+title: "MIT mapped every AI app against every job. Here's what they found."
+description: "Researchers at MIT mapped 39,603 work activities against 13,275 AI tools and every industrial robot ever deployed. The result is the most comprehensive picture of where AI is — and isn't — going."
+date: 2026-03-31
+lastVerified: 2026-03-31
+readTime: "14 min read"
+author: "Knovo Team"
+tags: ["AI", "research", "future of work", "MIT", "market analysis"]
+featured: false
+---
+
+For years, most arguments about AI and work have been built on fragments. One report looks at chatbots. Another looks at robots in factories. Another measures exposure at the occupation level without asking which tasks inside a job are actually changing. Nobody had mapped the full AI landscape against every job at the same time.
+
+That is what makes the new MIT study so important. Cai et al. (2026, arXiv:2603.20619) took 39,603 distinct work activities from the U.S. O*NET database, mapped them against 13,275 AI applications from the There's an AI For That dataset, and then added 20.8 million industrial robots from the IFR dataset. The result is the clearest picture yet of where AI is actually showing up in the economy, not where headlines say it is.
+
+The headline finding is extraordinary: 92% of all AI applications cluster into just 6.8% of all work activities. That means the current AI boom is not spreading evenly across the economy. It is drilling very deep into a narrow slice of task space, mostly in digital, cognitive work.
+
+This matters because it changes how builders, companies, workers, and policymakers should think about the future. The question is no longer "Will AI touch everything?" The more useful question is "Why is almost all AI effort being pulled into such a tiny part of the available work landscape, and what does that leave untouched?"
+
+## What the researchers actually measured
+
+The strength of this paper is not just the headline number. It is the measurement design. Instead of making a broad claim like "AI affects knowledge work," the researchers built a task-level map that links specific AI systems to specific work activities.
+
+That distinction is important because occupation-level analysis often hides the real pattern of change. A single occupation can contain activities that are already easy to automate, activities that are hard but adjacent to automation, and activities that remain mostly human because they depend on physical presence or social legitimacy. By working at the activity level, the paper avoids the false choice between "AI replaces the job" and "AI does not affect the job at all."
+
+### O*NET: the full task map of work
+
+The foundation is O*NET, the U.S. government's occupational database. Most people think of jobs at the title level: doctor, teacher, accountant, logistics manager. O*NET breaks that abstraction apart. In the study, the researchers use 923 occupations and decompose them into 39,603 granular activities.
+
+That means the analysis is not asking whether "medicine" is automatable in the abstract. It can ask whether AI is used for activities like reviewing patient test results, writing prescriptions, documenting visits, or managing medical staff. That level of granularity matters because AI rarely replaces a whole job at once. It lands on tasks first.
+
+This is one of the paper's most useful contributions for builders. It shifts the unit of analysis from occupations to activities. Products do not automate "lawyers." They automate drafting, review, search, summarisation, routing, triage, and compliance checks inside legal work.
+
+### TAAFT: 13,275 public AI applications
+
+The second dataset comes from There's an AI For That, often abbreviated as TAAFT. The researchers collected 13,275 AI software tools from July 2022 to July 2025 and classified each one by the work activity it performs.
+
+That time window matters. It captures the post-foundation-model explosion when public AI products went from novelty to ecosystem. It also lets the authors distinguish between shallow category growth and deeper market saturation. As the paper shows, AI product growth has been explosive since 2022, but that growth has mostly come from more companies building into the same activity clusters rather than expanding broadly into new ones.
+
+### IFR: every major industrial robot category in the market
+
+The third dataset comes from the International Federation of Robotics, or IFR. This adds global deployment data for 20.8 million industrial robots by type and sector.
+
+That robotics layer is essential because software-only maps of AI miss the physical economy. If you only study chatbots, copilots, search agents, and image tools, you end up with a distorted conclusion: that AI is mostly about text, code, and media. By including robots, the paper can compare software AI and physical automation inside the same activity framework.
+
+That combined view is what makes the study broader than most labor-market commentary. It is not only asking where LLM-style systems are going. It is asking where all economically deployed AI systems are going.
+
+### How the mapping was done
+
+The methodology is unusually important here because the paper depends on a large-scale classification step. According to Cai et al. (2026, arXiv:2603.20619), the researchers used GPT-5.1 to map each AI app to O*NET activities through what they call a Structured Prompt with Fallback and Override, or SPFO, approach.
+
+In plain English, SPFO is a workflow for making model-assisted classification more reliable. The model first maps a tool description to candidate activities in a structured way. If confidence is weak or the mapping looks incomplete, fallback and override logic adds another layer of checking rather than blindly accepting the first answer.
+
+The crucial point is validation. The paper reports that the method was checked against human raters, who agreed 81.4% of the time. For a classification problem at this scale, across such a large activity ontology, that is a serious effort at grounding the results rather than simply using an LLM as an unexplained black box.
+
+## The Think / Do / Interact framework
+
+The conceptual center of the paper is a simple but powerful framework: every work activity can be understood as primarily Think, Do, or Interact.
+
+This is more than a labeling exercise. It explains why some activity clusters are already saturated with AI products while others remain thinly served. Different types of work create different technical and commercial conditions.
+
+<ThinkDoInteractDiagram />
+
+### Think
+
+Think activities are information-processing tasks: analysis, synthesis, decision support, writing, coding, diagnosis, planning, evaluation, and other forms of cognitive work. Examples include analysing financial data, writing code, or diagnosing medical conditions.
+
+This is where software AI dominates. The paper finds that Think accounts for 72% of the total AI software market by dollar value, and virtually all 13,275 AI apps operate in this category.
+
+That finding should not be surprising, but the scale of the concentration still matters. These activities are digital from the start. They already exist as text, numbers, forms, images, tables, tickets, documents, and code. They can be copied at near-zero marginal cost. They are easy to route through APIs. They generate data exhaust that can be used for training, evaluation, and iteration.
+
+In other words, Think work is where software can land with the least friction. You do not need sensors, motors, field deployment, safety certification, or physical maintenance. You need a user interface, model access, a workflow, and some combination of reliability and distribution.
+
+That is why the modern AI product landscape feels crowded in writing assistance, coding, customer support, data analysis, and content generation. The market is not spreading out evenly because the easiest terrain is already very obvious.
+
+### Do
+
+Do activities are physical tasks: manipulation, movement, operation, cleaning, assembly, welding, surgery support, picking, packing, and other forms of bodily execution in the world.
+
+In the paper, this domain is addressed primarily by robotics rather than software AI and accounts for 12% of total AI market value.
+
+That single number says a lot. Physical work is enormous in economic importance and workforce size, but it remains much less penetrated by AI than cognitive digital work. The reason is not that physical work is irrelevant. It is that physical deployment is hard.
+
+A software tool that drafts emails can be shipped globally in a day. A robot that handles surgical equipment or warehouse picking must work inside messy environments, with safety constraints, hardware limits, integration risk, maintenance demands, and long adoption cycles. Builders often underestimate how much non-model complexity sits between "capability exists in a demo" and "useful system is deployed at scale."
+
+So while public discourse often talks about AI and robotics as one wave, the paper shows they are economically and operationally very different waves.
+
+### Interact
+
+Interact activities involve social engagement: counseling, teaching, leading teams, negotiating, serving, persuading, coordinating, caring, and other tasks where the response of another human is part of the work itself.
+
+This is the most structurally interesting category in the paper. Interact accounts for 48% of combined AI market value when software and robotics are counted together, yet it remains underserved relative to its importance.
+
+That apparent tension matters. Interaction is economically valuable, but it is also hard to automate well because the output is not just information or motion. It is relationship quality, trust, timing, empathy, social context, and often institutional responsibility.
+
+Humans do not respond to automated interaction the same way they respond to automated calculation. In a sensitive support case, a patient consultation, a school setting, or a management conversation, the standard for acceptance is different. The technical question is not only "Can the system produce a plausible response?" It is "Will the other human accept that response as legitimate in this context?"
+
+That is why Interact remains a major frontier. It has real market value, but current systems still run into trust, product, regulatory, and social barriers.
+
+## Where AI is concentrated and why
+
+The strongest empirical message in the paper is concentration. Nearly the entire visible AI software market is collapsing into a tiny part of the activity map.
+
+The core figure is simple: 92% of all AI applications fall into just 6.8% of work activities. That is not mild clustering. It is extreme concentration.
+
+### The market is deep, not broad
+
+This helps explain something many builders already feel intuitively. There are countless tools for writing assistance, coding, image generation, analysis, content production, and customer support, but far fewer serious products in skilled trades, physical operations, social care, or high-friction enterprise workflows.
+
+The paper sharpens that intuition with another important statistic: 1.6% of all work activities account for over 60% of the entire AI market value, which the researchers estimate at about $186.4 billion in total, including $140.3 billion in software and $46.1 billion in robotics.
+
+That means the market is not merely concentrated by product count. It is concentrated by money too. Capital, users, product effort, and vendor competition are all piling into the same small pockets of work.
+
+### Why the top activities are mostly cognitive
+
+The top activity clusters by AI app count are all cognitive: writing assistance, coding, data analysis, image generation, customer support, and content creation.
+
+That pattern follows directly from the structure of the current model stack. Foundation models are strongest where the input and output are already digital, where tasks are easy to demo, and where performance gets better quickly with more data and feedback.
+
+These categories also benefit from distribution advantages. A writing tool can be embedded into email, docs, browsers, CRMs, and team chat. A coding assistant can piggyback on existing IDE habits. A customer support tool can attach to existing ticketing systems. Once a category gains traction, it attracts more builders, more training data, more integrations, and more benchmarking.
+
+That creates a strong network effect: more users produce more product learning, which improves quality, which brings more users, which attracts more capital and more competitors. The market keeps reinforcing the same activity clusters.
+
+### The post-2022 inflection
+
+The growth curve is dramatic. In 2016, there were just 11 publicly available AI apps in the dataset. By July 2025, there were 13,275.
+
+But the paper makes a subtler point that matters even more: the growth since 2022 has been mostly in depth, not breadth. In other words, the market did not suddenly discover thousands of new kinds of work to automate. It produced thousands of tools going after the same tasks with different packaging, workflows, distribution, pricing, and model quality.
+
+This is a crucial correction to the usual "AI is everywhere now" narrative. AI is expanding fast, but not evenly. It is getting denser in the same zones.
+
+<AiConcentrationDiagram />
+
+## The robotics finding
+
+The robotics section of the study is one of its most useful correctives to popular imagination.
+
+The dataset includes 20.8 million industrial robots deployed globally. That sounds like overwhelming physical automation. But the distribution tells a different story.
+
+According to the paper, 76.7% of deployed robots are floor-cleaning robots, mainly autonomous vacuum and mop systems in commercial settings. Only about 23% of deployed robots handle genuinely complex physical tasks such as welding, assembly, surgical assistance, and material handling.
+
+That changes the interpretation immediately. If most deployed robots are cleaning floors, then the physical automation base is much narrower than headline deployment counts imply.
+
+### Why this matters
+
+There is a big difference between saying "there are tens of millions of robots in the world" and saying "most of physical work is being automated." The first statement is numerically true in the dataset. The second is not supported by the distribution.
+
+Cleaning is important, but it is also a specific subset of physical work with comparatively tractable navigation and task design. Welding, assembly, warehouse picking, healthcare assistance, and multi-step manipulation in complex environments are different orders of difficulty.
+
+So the paper's robotics result points to a broader theme: the Do domain remains far less automated than media narratives suggest. The robot revolution exists, but it has not reached most of the activity space in factories, warehouses, healthcare systems, and field operations.
+
+That matters for founders and operators because it means the physical economy still contains large pockets where the gap is not demand, but execution difficulty.
+
+## Three types of opportunity the paper identifies
+
+One of the best parts of the study is that it does not stop at saying where AI already is. It also maps the unoccupied space and classifies the nature of the gaps.
+
+### 1. Technical opportunities
+
+Technical opportunities are activities where AI appears to be technically feasible because related capabilities already exist, yet no application has been shipped into that activity.
+
+These are the most obvious near-term product opportunities. The risk is not that the capability is impossible. The risk is usually packaging, workflow design, integration, data access, trust, or go-to-market.
+
+For builders, this category is especially actionable. If the core capability is already proven elsewhere, the question becomes whether a vertical workflow can be built around it. Many strong companies are created in exactly this gap: not by inventing a new model class, but by applying existing capability to an overlooked but real activity.
+
+### 2. Economic opportunities
+
+Economic opportunities are the highest-value gaps in the paper's framework. These are activities that are not only technically feasible, but also economically attractive because they involve large workforces, meaningful wages, and repeated patterns of work.
+
+This is where the map becomes strategically useful. A category can be feasible and still unattractive if buyers are fragmented or budgets are weak. Conversely, a category can be large and painful but still not be feasible with current systems. Economic opportunities sit at the intersection of both.
+
+For companies deciding where to place AI bets, these are arguably the most important gaps because they represent under-served activity space with real spending potential.
+
+### 3. Unrecognized opportunities
+
+The most interesting category is unrecognized opportunities: activities where the possibility of AI has not been widely considered at all.
+
+These often sit in physical and social domains, where current product markets are thin and the default assumption is that automation is either undesirable or too hard. That makes them higher risk, but also potentially more transformative.
+
+This is the part of the paper that should make builders pause. The crowded software AI market may create the false impression that the map is already known. It is not. There are still large regions of activity space where nobody has built a serious product category yet, not because there is no need, but because the industry's attention is concentrated elsewhere.
+
+## What this means
+
+The study is not just descriptive. It changes the strategic picture for multiple groups at once.
+
+### For workers
+
+The paper argues against the lazy idea that AI is coming for all jobs in the same way and on the same timeline. What it is actually doing is drilling deep into a narrow set of cognitive tasks.
+
+That means the near-term pressure is highly uneven. Workers whose core activities are already digital, reproducible, and information-heavy will feel faster change. Workers in physical roles or roles centered on trust, care, coordination, and human interaction generally have more insulation, not because they are immune forever, but because their activity space is structurally harder for today's systems to enter.
+
+The practical implication is that workers should analyze task exposure, not just job titles. Two people in the same occupation may be affected very differently depending on which activities dominate their day.
+
+### For companies
+
+Most enterprise AI budgets are being spent in the same 6.8% of activity space every other company is targeting. That means the strategic edge from deploying AI into writing, coding, and analysis is compressing quickly.
+
+Those tools still matter. They can create efficiency gains, margin improvements, and better user experience. But they are also becoming the most crowded part of the market. When every vendor offers the same assistant categories, the advantage shifts from raw model access to workflow fit, distribution, data, and execution.
+
+Companies should read this paper as a warning against herd strategy. If every budget line goes to the same cognitive categories, differentiation erodes fast.
+
+### For builders
+
+For builders, the paper is effectively a market map of white space. The visible AI economy is intensely competitive in the same narrow zones, while 93.2% of activity space remains outside the current concentration cluster.
+
+That does not mean all of that space is immediately buildable. Much of it is hard for good reason. But it does mean the next wave of meaningful AI companies is less likely to come from launching the tenth writing copilot in a crowded category and more likely to come from making neglected work activities legible, automatable, and adoptable.
+
+Physical automation, skilled trades, complex enterprise coordination, social care workflows, and interaction-heavy systems all look structurally underserved in the paper's framework.
+
+### For policymakers
+
+If AI concentration is narrow, then labor disruption is narrow too. That is important. It means the shock will not be distributed evenly across the economy.
+
+Some activity clusters will face heavy compression, rapid tooling change, and productivity pressure much earlier than others. Policy responses built around the idea of universal simultaneous disruption may miss the real pattern, which is concentrated transition in specific categories followed by slower expansion elsewhere.
+
+That has implications for retraining, education, labor policy, and regional planning. The study suggests that policymakers should watch activity clusters, not just top-line AI adoption rates.
+
+## Limitations the researchers acknowledge
+
+The paper is unusually ambitious, and the authors are explicit about what the map can and cannot claim.
+
+First, the TAAFT dataset covers publicly listed AI tools. Internal enterprise systems are not captured. That means the real concentration may be even higher if companies are building private systems in the same already-crowded categories.
+
+Second, O*NET is U.S.-centric. It is the best structured occupation-and-activity dataset of its kind, but activity structures vary across countries, sectors, and institutional settings.
+
+Third, market value estimates are based on available pricing data, which is incomplete for enterprise and SaaS contexts. So the value numbers are useful directional estimates, not a final census of all AI revenue.
+
+Finally, the paper reflects the state of the market as of July 2025. In an industry moving this quickly, any map is a snapshot. But that limitation cuts both ways. If the market has already changed since then, the main question is whether it has broadened materially or simply grown denser in the same familiar territory.
+
+## Conclusion
+
+The most striking finding in this research is not where AI is. It is where it is not.
+
+After mapping 39,603 work activities, the paper shows that a handful of them are attracting 92% of all AI development. That is not an argument for AI being small. It is an argument for AI being highly concentrated.
+
+The important part is that this concentration does not look like a pure technological limit. Cai et al. identify dozens of categories that appear technically feasible but commercially ignored. In other words, the blank spaces on the map are not all impossibilities. Many are market choices.
+
+That is the real significance of the study. It gives us a better way to talk about the future of work. Not as a vague question about whether AI will "replace jobs," but as a concrete question about which activities are getting saturated, which remain untouched, and where the next serious opportunities still lie.
+
+Read next: [Where AI doesn't exist yet — the opportunity gaps MIT's research exposed](/guides/ai-opportunity-gaps-mit-research)

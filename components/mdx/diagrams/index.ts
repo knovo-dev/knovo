@@ -3,3 +3,5 @@ export { TransformerDiagram } from "./TransformerDiagram";
 export { AttentionDiagram } from "./AttentionDiagram";
 export { TemperatureDiagram } from "./TemperatureDiagram";
 export { ContextWindowDiagram } from "./ContextWindowDiagram";
+export { ThinkDoInteractDiagram } from "./ThinkDoInteractDiagram";
+export { AiConcentrationDiagram } from "./AiConcentrationDiagram";

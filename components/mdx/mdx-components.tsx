@@ -8,6 +8,8 @@ import {
   AttentionDiagram,
   TemperatureDiagram,
   ContextWindowDiagram,
+  ThinkDoInteractDiagram,
+  AiConcentrationDiagram,
 } from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
@@ -66,4 +68,6 @@ export const mdxComponents: MDXComponents = {
   AttentionDiagram,
   TemperatureDiagram,
   ContextWindowDiagram,
+  ThinkDoInteractDiagram,
+  AiConcentrationDiagram,
 };
