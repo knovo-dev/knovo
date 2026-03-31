@@ -3,6 +3,8 @@ export { TransformerDiagram } from "./TransformerDiagram";
 export { AttentionDiagram } from "./AttentionDiagram";
 export { TemperatureDiagram } from "./TemperatureDiagram";
 export { ContextWindowDiagram } from "./ContextWindowDiagram";
+export { ContextWindowAnatomyDiagram } from "./ContextWindowAnatomyDiagram";
+export { LostInTheMiddleDiagram } from "./LostInTheMiddleDiagram";
 export { ThinkDoInteractDiagram } from "./ThinkDoInteractDiagram";
 export { AiConcentrationDiagram } from "./AiConcentrationDiagram";
 export { ThreeOpportunityTypesDiagram } from "./ThreeOpportunityTypesDiagram";

@@ -1,0 +1,433 @@
+---
+title: "Context windows explained: how to use them effectively (2026)"
+description: "What context windows are, why they matter for performance and cost, and practical strategies for long documents, agent loops, and production AI apps."
+date: 2026-03-31
+lastVerified: 2026-03-31
+readTime: "10 min read"
+author: "Knovo Team"
+tags: ["context windows", "LLMs", "foundations", "prompt engineering", "production"]
+featured: false
+---
+
+Context windows are one of the most misunderstood parts of modern LLM systems. People often hear that a model has a `128k`, `200k`, or even million-token context window and assume that means it can simply "read everything" with no downside. In practice, context windows are both a capability and a constraint. They determine how much information a model can consider in one interaction, but they also shape cost, latency, prompt design, retrieval strategy, and product architecture.
+
+If you build with LLMs long enough, context becomes an engineering problem rather than a model spec. Long chat threads get expensive. Agent loops accumulate junk. Document pipelines silently exceed limits. Retrieval systems return too much context and make answers worse instead of better. Understanding context windows is how you stop treating long context as a magic feature and start treating it as a budget you manage deliberately.
+
+## What a context window is
+
+A context window is the maximum amount of information a model can process in one request-response cycle, measured in tokens.
+
+That last part matters. Context windows are measured in tokens, not words, pages, or characters.
+
+A token is a chunk of text the model's tokenizer uses internally. Sometimes a token is a full word. Sometimes it is part of a word, a punctuation mark, a number fragment, or a chunk of code syntax. This is why "how many pages fit in 128k" is never a stable answer. Legal prose, source code, tables, JSON, and transcripts all tokenize differently.
+
+In practical terms, your total context usage usually includes:
+
+1. System instructions
+2. Developer instructions
+3. User input
+4. Retrieved documents
+5. Tool outputs
+6. Conversation history you keep in the prompt
+7. Reserved output tokens for the model's answer
+
+That means the headline context size is never fully available for your source material alone. Part of the window is always consumed by the scaffolding around the task.
+
+<ContextWindowAnatomyDiagram />
+
+### Tokens, not words
+
+This is the first place teams make mistakes. They estimate prompt size using word count or page count and then wonder why requests fail or bills spike.
+
+A short technical string can tokenize badly. A dense JSON payload may use more tokens than you expect. Code often consumes context differently from prose. Repeated boilerplate across multiple retrieved chunks can quietly eat large amounts of budget.
+
+This is why token counting should be part of production hygiene, especially for:
+
+1. Long documents
+2. Multi-turn assistants
+3. RAG pipelines
+4. Agent systems with repeated tool calls
+5. Structured prompts with examples
+
+### Practical example: count tokens with `tiktoken`
+
+If you are building with OpenAI-compatible tokenization, `tiktoken` is a simple way to inspect prompt size before a request is sent.
+
+```python
+# pip install -U tiktoken
+import tiktoken
+
+enc = tiktoken.get_encoding("cl100k_base")
+
+samples = {
+    "short prose": "Explain context windows in plain English.",
+    "json": '{"task":"summarize","max_bullets":5,"tone":"concise"}',
+    "code": "def add(a, b):\n    return a + b",
+}
+
+for label, text in samples.items():
+    token_ids = enc.encode(text)
+    print("-" * 60)
+    print(label)
+    print(f"chars:  {len(text)}")
+    print(f"tokens: {len(token_ids)}")
+    print(token_ids[:20])
+```
+
+The important lesson is not the specific encoding output. It is the habit of measuring prompts in tokens instead of guessing.
+
+## How context size affects cost and latency
+
+Longer context is useful, but it is not free.
+
+Every additional token in the input has to be processed by the model. That affects cost directly because most APIs charge by input and output tokens. It also affects latency because larger prompts take longer to move through the model.
+
+This becomes especially important in applications that repeatedly resend history, such as chat systems, copilots, and agent loops. A single message may look cheap in isolation, but a long conversation can become expensive if every turn replays thousands of old tokens.
+
+### Why larger windows raise cost even before you "fill" them
+
+The existence of a large context window often changes developer behavior. Teams become less disciplined. Instead of curating context, they stuff more into the prompt because the model allows it.
+
+That leads to three predictable problems:
+
+1. Rising per-request cost
+2. Slower response times
+3. Worse signal-to-noise ratio
+
+The third problem is often missed. Even if a model can fit a lot of text, that does not mean every extra token helps. Long prompts frequently include stale conversation, irrelevant retrieval results, duplicated instructions, or tool logs the model does not need. You are paying more for context that makes the answer worse.
+
+### Latency is a product problem, not just an infra problem
+
+When context grows, users feel it. Assistants become slower. Multi-step workflows feel heavy. Tool-using agents pause longer between actions. In production systems, context growth often shows up first as degraded user experience rather than obvious model failure.
+
+That means context budgeting should be treated like performance engineering:
+
+1. Measure token usage by request type
+2. Measure latency by request type
+3. Track which prompt components are growing over time
+4. Cut repeated or low-value context aggressively
+
+If you do not do this, context accumulation becomes a hidden tax on the product.
+
+## The lost-in-the-middle problem
+
+One of the biggest misconceptions about long context is that once text fits into the window, the model will use it evenly. That is not how real systems behave.
+
+Long-context models can still struggle to use information buried in the middle of a large prompt. This is often described as the lost-in-the-middle problem: content near the beginning and end of the prompt may be used more reliably than content buried deep inside a long block of text.
+
+This does not mean long context is useless. It means long context still needs structure.
+
+### Why this happens
+
+At a high level, attention is not the same thing as perfect retrieval. The model can attend over long sequences, but long prompts create competition among instructions, examples, chunks, tool outputs, and intermediate reasoning traces.
+
+If the prompt is messy, the model has to spread attention across too many signals:
+
+1. The key instruction may be far from the relevant evidence
+2. Irrelevant chunks may crowd out the useful ones
+3. Redundant text may waste budget without improving recall
+4. Conflicting instructions may dilute the intended behavior
+
+That is why "just give the model the whole document" often underperforms a well-designed retrieval or summarization pipeline.
+
+<LostInTheMiddleDiagram />
+
+### Signs you are seeing this problem
+
+In practice, lost-in-the-middle issues often look like:
+
+1. The answer uses the first pages of a document and ignores the middle
+2. The model follows formatting instructions at the top but misses evidence later on
+3. A long conversation assistant remembers the opening instructions and the latest turn but misses important details from the middle
+4. Retrieval systems degrade after increasing the number of chunks
+
+When that happens, the fix is rarely "increase context again." The better fix is usually prompt structure and context selection.
+
+## Practical strategies for long documents
+
+The safest way to work with long documents is to avoid stuffing everything into one prompt by default. Long context should be used deliberately, not lazily.
+
+### When full-context prompting actually makes sense
+
+There are cases where using a large chunk of the document in one pass is the right choice.
+
+This is usually true when:
+
+1. The task depends on relationships across distant sections
+2. You need whole-document style or consistency
+3. The document is small enough to fit comfortably with output budget
+4. Retrieval would fragment the reasoning too much
+
+Examples include reviewing a contract for internal consistency, checking whether a policy contradicts itself across multiple sections, or rewriting a short report while preserving tone and structure.
+
+The key phrase is "fit comfortably." If the prompt is close to the model limit, you are leaving yourself no room for output quality or repeated iteration. Whole-document prompting works best when the document is large enough to benefit from joint reasoning but still small enough to leave healthy margin.
+
+### Map-reduce and staged processing
+
+One of the most reliable patterns for long documents is staged processing.
+
+Instead of asking one model call to do everything, split the work:
+
+1. Break the document into chunks
+2. Extract or summarize each chunk
+3. Merge the intermediate outputs
+4. Run a final synthesis step
+
+This is often called a map-reduce pattern, and it works well because it matches the real constraint: the model does not need every raw token from every page at the same time. It needs the right intermediate state at each stage.
+
+Staged processing is especially useful for:
+
+1. Research summaries
+2. Transcript analysis
+3. Large report generation
+4. Compliance review
+5. Multi-document comparisons
+
+The tradeoff is that you must design the intermediate representation carefully. If the chunk summaries are vague, the final synthesis step will be weak. If the chunk summaries preserve key evidence, structure, and unresolved questions, the final pass can be much stronger than one giant stuffed prompt.
+
+### Chunking
+
+Chunking means splitting large documents into smaller sections that can be processed, retrieved, or summarized independently.
+
+Good chunking improves:
+
+1. Retrieval quality
+2. Citation quality
+3. Cost control
+4. Traceability
+
+Bad chunking creates fragmented evidence, broken references, and too much overlap.
+
+In practice, chunking works best when it preserves structure:
+
+1. Use headings when possible
+2. Keep semantically related paragraphs together
+3. Avoid cutting tables, code blocks, or lists in awkward places
+4. Use overlap only where it improves continuity
+
+Chunking is not only for RAG systems. It is also useful for preprocessing, summarization pipelines, and map-reduce style long-document workflows.
+
+### Retrieval over stuffing
+
+If you have a large corpus, retrieval is usually better than prompt stuffing.
+
+Instead of sending every possible document chunk, retrieve the most relevant chunks for the current question and only send those. This keeps the context focused and reduces wasted tokens.
+
+Why retrieval usually wins:
+
+1. Lower cost
+2. Lower latency
+3. Better relevance
+4. Easier debugging
+
+Stuffing works best when:
+
+1. The document is genuinely small enough
+2. Full-document reasoning is required
+3. The information structure is linear and highly interdependent
+
+Even then, you should still think carefully about prompt order and output budget.
+
+### Summarisation
+
+Summarization is a context compression tool.
+
+If an agent loop or assistant has accumulated too much conversation history, you often do not need the full raw transcript. You need a structured summary of:
+
+1. Decisions made
+2. Open questions
+3. Constraints
+4. User preferences
+5. Pending tasks
+
+That kind of summary preserves working state without replaying every message.
+
+Summarization is especially useful for:
+
+1. Long support conversations
+2. Agent handoffs
+3. Multi-step research workflows
+4. Internal copilots that stay open all day
+
+The key is to summarize into durable state, not vague prose. "The user asked about architecture" is weak. "The user wants a Redis-backed queue, no managed services, and p95 under 250ms" is useful.
+
+### Sliding windows
+
+A sliding window keeps only the most relevant recent context while older context is summarized or dropped.
+
+This is often the right pattern for chat and agent systems:
+
+1. Keep the latest few turns in raw form
+2. Keep durable state as a structured summary
+3. Drop low-value intermediate chatter
+
+Sliding windows are simple but effective because they reflect how many workflows actually behave. The model usually needs the current task state and recent interaction details, not every single token from the last hour.
+
+### Put the question near the relevant context
+
+Long-context prompting works better when the task is anchored clearly near the evidence it depends on.
+
+In practice:
+
+1. Put the instruction before the context if it governs the entire task
+2. Put the final question or extraction target near the end if the model should answer from the preceding material
+3. Use headings and delimiters so the model can distinguish instructions from source text
+
+This matters because prompt layout influences what the model uses effectively. A good long-context prompt is not only shorter. It is easier to navigate.
+
+## Context window sizes of major models
+
+This section is time-sensitive, so these figures are accurate as of **March 31, 2026** based on official vendor documentation.
+
+### GPT-5.4
+
+OpenAI's official model page lists **GPT-5.4** with a **1,050,000-token context window** and **128,000 max output tokens**.
+
+That is unusually large and changes what is feasible for long documents, codebases, and multi-step agentic workflows. But it also raises the importance of discipline: once you can fit huge prompts, it becomes easier to overspend on low-value context.
+
+### Claude Sonnet 4.6
+
+Anthropic's official documentation for **Claude Sonnet 4.6** lists a **1 million token context window**.
+
+For practical planning, that puts it in the same general long-context class as frontier million-token systems. But remember that vendor comparisons are never perfect because prompt construction, hidden system behavior, and output budgeting differ across platforms.
+
+### Gemini
+
+Google's official Gemini documentation states that **Gemini 3 models support a 1 million token input context window and up to 64k tokens of output**.
+
+That makes Gemini a serious option for long-context workflows, especially when multimodal inputs or large corpora are involved.
+
+### The real lesson from these numbers
+
+Million-token context windows are real. But they do not remove the need for architecture.
+
+They are best understood as expanding the set of viable strategies, not replacing judgment. You can now do more whole-document and whole-session workflows directly. You still should not assume that sending more context is automatically better.
+
+## Agent loops and context accumulation
+
+Agent systems make context problems worse because they generate their own history.
+
+A normal chat app mostly stores user and assistant turns. An agent loop may also accumulate:
+
+1. Tool call arguments
+2. Tool outputs
+3. Plans
+4. Intermediate reasoning summaries
+5. Scratchpad text
+6. Failed attempts
+
+If all of that is replayed each turn, the context window fills surprisingly fast.
+
+### Why agents hit limits earlier than chat apps
+
+An agent may perform ten or twenty internal steps for one user-visible answer. If each step appends logs or observations to the next request, context growth becomes multiplicative rather than linear.
+
+This is why many agent systems degrade over time:
+
+1. Cost rises sharply
+2. Latency rises sharply
+3. The agent becomes distracted by stale traces
+4. Important state gets buried
+
+The solution is not bigger windows alone. It is state management.
+
+### Better patterns for agent memory
+
+A practical agent should separate at least three kinds of memory:
+
+1. Durable state: facts, decisions, constraints
+2. Working memory: the current subtask
+3. Ephemeral logs: tool traces and low-value intermediate output
+
+Durable state should survive. Working memory should stay compact. Ephemeral logs should often be summarized or dropped once they are no longer needed.
+
+If you treat all memory as equally important, the agent eventually drowns in its own transcript.
+
+## What to do when you hit the limit
+
+At some point, every serious system hits a context limit or gets close enough that performance degrades before a hard failure.
+
+When that happens, do not just trim tokens randomly. Use a structured response.
+
+### 1. Identify what is consuming the budget
+
+Break prompt size into components:
+
+1. System prompt
+2. Chat history
+3. Retrieval context
+4. Tool output
+5. Examples
+6. Reserved output budget
+
+Teams often discover that the biggest consumer is not the source document. It is duplicated instructions, repeated examples, or oversized tool outputs.
+
+### 2. Drop low-value context first
+
+The first tokens to cut are usually:
+
+1. Verbose intermediate logs
+2. Stale history
+3. Duplicated instructions
+4. Low-relevance retrieved chunks
+
+Do not cut the highest-value evidence just to preserve noisy history.
+
+### 3. Summarize before you truncate blindly
+
+If older context contains important state, summarize it into a structured form before dropping raw text. This preserves continuity without blowing the budget.
+
+### 4. Re-architect if the pattern is recurring
+
+If you repeatedly hit the limit, the problem is probably not one bad prompt. It is the system design.
+
+Typical fixes:
+
+1. Add retrieval instead of stuffing
+2. Use chunked processing
+3. Introduce summary state
+4. Split tasks into multiple calls
+5. Keep long-term memory outside the live prompt
+
+### 5. Reserve output tokens deliberately
+
+Many failures happen because teams forget that output also consumes the window. If the prompt already nearly fills the limit, the model has little room left to answer properly.
+
+Always leave explicit output budget, especially for:
+
+1. Long-form generation
+2. Structured JSON
+3. Tool-using agents
+4. Multi-step plans
+
+## A practical mental model
+
+The best way to think about context windows is not as storage. Think of them as attention budget.
+
+A larger budget lets the model consider more material in one pass. But you still have to decide what deserves to be in that budget.
+
+That leads to a simple operating rule:
+
+1. Measure tokens
+2. Prefer relevant context over maximum context
+3. Compress state when possible
+4. Retrieve instead of stuffing
+5. Design agents so they do not carry their entire life story forever
+
+## What this means for production AI apps
+
+In production, context windows are never just a model spec. They are a product design constraint.
+
+If you manage context well, you get:
+
+1. Lower cost
+2. Lower latency
+3. Better reliability
+4. Cleaner agent behavior
+5. More understandable failure modes
+
+If you manage context badly, you get slow assistants, expensive prompts, brittle long-document workflows, and agents that gradually become less useful as they accumulate junk.
+
+The practical takeaway is simple. Long context is powerful, but good systems still rely on selection, compression, and structure. The teams that win with long-context models are usually not the ones who paste the most text into the prompt. They are the ones who decide, carefully and consistently, what the model actually needs to see right now.
+
+That discipline becomes more important, not less, as context windows grow. Bigger windows expand your options, but they also increase the temptation to avoid architectural decisions. In real production systems, context is still something you manage, not something you outsource to the model spec.
