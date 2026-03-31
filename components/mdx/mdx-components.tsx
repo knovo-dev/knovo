@@ -10,6 +10,8 @@ import {
   ContextWindowDiagram,
   ThinkDoInteractDiagram,
   AiConcentrationDiagram,
+  ThreeOpportunityTypesDiagram,
+  PhysicalSocialGapDiagram,
 } from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
@@ -70,4 +72,6 @@ export const mdxComponents: MDXComponents = {
   ContextWindowDiagram,
   ThinkDoInteractDiagram,
   AiConcentrationDiagram,
+  ThreeOpportunityTypesDiagram,
+  PhysicalSocialGapDiagram,
 };

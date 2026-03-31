@@ -224,6 +224,12 @@ Run `npm run build` and confirm zero errors. Report back.
 
 ---
 
+### TASK FOR CODEX — Article 13
+
+**Status:** PENDING — `content/guides/ai-opportunity-gaps-mit-research.mdx`
+
+---
+
 ## Current Site Status (as of 22 March 2026)
 
 - 10 articles live at knovo.dev/guides/

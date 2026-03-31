@@ -5,3 +5,5 @@ export { TemperatureDiagram } from "./TemperatureDiagram";
 export { ContextWindowDiagram } from "./ContextWindowDiagram";
 export { ThinkDoInteractDiagram } from "./ThinkDoInteractDiagram";
 export { AiConcentrationDiagram } from "./AiConcentrationDiagram";
+export { ThreeOpportunityTypesDiagram } from "./ThreeOpportunityTypesDiagram";
+export { PhysicalSocialGapDiagram } from "./PhysicalSocialGapDiagram";
