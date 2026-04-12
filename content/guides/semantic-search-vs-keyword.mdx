@@ -1,0 +1,385 @@
+---
+title: "Semantic search vs keyword search: when to use each (2026)"
+description: "How BM25 and vector search actually work, where each one fails, why hybrid search usually wins in production, and how to decide which approach fits your use case."
+date: 2026-04-12
+lastVerified: 2026-04-12
+readTime: "10 min read"
+author: "Knovo Team"
+tags: ["search", "semantic search", "RAG", "embeddings", "production"]
+featured: false
+---
+
+Search discussions in AI are often framed too simply. Keyword search is described as old and brittle. Semantic search is described as modern and intelligent. That framing is easy to repeat and usually wrong.
+
+In production systems, keyword and semantic search solve different failure modes. BM25 can outperform dense retrieval when exact terminology matters. Embedding search can outperform lexical systems when wording varies but intent stays the same. And once you run real workloads across messy corpora, the most practical answer is often not either-or. It is hybrid search, plus reranking, plus evaluation.
+
+This is exactly why search architecture matters so much for RAG systems. If the wrong evidence enters the prompt, generation quality drops no matter how strong the model is. If the retriever is tuned only for one class of query, recall collapses for the others. Understanding the difference between keyword and semantic retrieval is therefore not search theory for its own sake. It is part of shipping reliable AI systems.
+
+## What keyword search actually does
+
+Keyword search is the family of methods that retrieves documents by matching terms in the query against terms in the corpus.
+
+The practical stack underneath that usually includes:
+
+1. tokenization
+2. inverted indexes
+3. term weighting
+4. scoring functions such as TF-IDF or BM25
+
+### Inverted indexes
+
+An inverted index maps terms to the documents that contain them.
+
+Instead of storing each document and scanning all of them at query time, the system stores postings lists like:
+
+1. `refund` -> document 2, document 8, document 19
+2. `policy` -> document 1, document 2, document 4
+3. `annual` -> document 2, document 5
+
+That is what makes lexical retrieval fast. You do not search every document. You jump directly to the ones containing the query terms.
+
+### TF-IDF
+
+TF-IDF is the simple intuition most people meet first:
+
+1. term frequency: how often a term appears in a document
+2. inverse document frequency: how rare that term is across the corpus
+
+The basic idea is that rare terms are often more informative than common ones, and terms repeated in a document may indicate stronger relevance.
+
+TF-IDF still matters conceptually, but modern production lexical search usually relies on BM25 rather than plain TF-IDF.
+
+### BM25
+
+BM25 is the default lexical baseline for good reason. In *The Probabilistic Relevance Framework: BM25 and Beyond*, Robertson and Zaragoza (2009) describe BM25 as part of the probabilistic relevance framework and explain why it became one of the most successful ranking functions in information retrieval.
+
+At a practical level, BM25 improves on simple TF-IDF by handling:
+
+1. diminishing returns from repeated terms
+2. document length normalization
+3. query-document term relevance in a more robust ranking function
+
+That is why BM25 remains hard to beat on many exact-term retrieval tasks. It is not "just keyword matching" in the naive sense. It is a mature lexical ranking approach that still anchors modern search stacks.
+
+## What semantic or vector search actually does
+
+Semantic search retrieves documents by comparing embedding vectors rather than matching literal terms.
+
+The usual flow is:
+
+1. convert each document chunk into an embedding
+2. convert the query into an embedding
+3. compare vectors using a similarity metric such as cosine similarity or dot product
+4. return the nearest matches
+
+The key idea is that semantically similar texts should end up near each other in vector space even when they do not share the same exact words.
+
+### Embeddings
+
+Embeddings are learned vector representations of text. In practice, they let the system encode meaning-like relationships such as paraphrase, topical relatedness, and contextual similarity.
+
+This is why a semantic retriever can connect:
+
+1. "cancel my plan" with "subscription termination"
+2. "job queue backlog" with "message processing delay"
+3. "doctor note" with "clinical documentation"
+
+even when the wording is different.
+
+If you want a deeper overview of how embedding systems work, see [Embeddings guide](/guides/embeddings-guide).
+
+### Similarity metrics
+
+Once text is embedded, the system compares vectors.
+
+The common metrics are:
+
+1. cosine similarity
+2. dot product
+3. Euclidean distance in some systems
+
+The important point is not the formula itself. It is that the system is ranking by geometric closeness in embedding space, not exact lexical overlap.
+
+### ANN indexing
+
+Because vector search over large corpora is expensive, production systems usually rely on approximate nearest neighbor indexing rather than exact brute-force comparison.
+
+This is where HNSW, IVF, and related indexing approaches matter. The retriever searches efficiently through the vector space without checking every stored embedding. That is what makes large-scale semantic retrieval practical in systems like Pinecone, Weaviate, pgvector, and Chroma.
+
+<SearchComparisonDiagram />
+
+Semantic search feels more intelligent because it can bridge vocabulary gaps. But it also introduces its own failure class: sometimes it retrieves things that are topically nearby and lexically plausible, but wrong in the exact way that matters for the task.
+
+## Where keyword search wins
+
+Keyword search wins when exact terms carry the meaning.
+
+This is more common than people expect.
+
+### Exact identifiers and literals
+
+BM25-style retrieval is usually better when the query depends on:
+
+1. product names
+2. error codes
+3. IDs
+4. model numbers
+5. legal clauses
+6. API fields
+
+If the user searches for `ERR_CONNECTION_RESET` or `invoice_status`, a lexical search system often outperforms dense retrieval because those exact strings matter more than semantic neighborhood.
+
+### Rare domain terminology
+
+Keyword search also wins when the corpus contains specialized vocabulary that should not be smoothed into semantic approximations.
+
+Examples:
+
+1. medical abbreviations
+2. legal terminology
+3. internal product codenames
+4. engineering configuration flags
+
+In these cases, the user often wants the documents that explicitly contain the term, not documents that merely discuss nearby concepts.
+
+### Transparent debugging
+
+Lexical retrieval is easier to explain.
+
+If a document ranked highly because it contained the exact query terms with strong BM25 weighting, that is understandable. This matters in production because search quality is easier to debug when the mechanism is visible.
+
+That is one reason BM25 remains a strong baseline. It is not only effective. It is legible.
+
+## Where semantic search wins
+
+Semantic search wins when meaning matters more than exact wording.
+
+### Vocabulary mismatch
+
+This is the core semantic-search advantage.
+
+Users rarely phrase questions the same way documents are written. Semantic retrieval helps when the query and the answer-bearing text use different language.
+
+Examples:
+
+1. "How do I stop double billing?" vs "duplicate charge prevention"
+2. "Can I get my money back?" vs "refund eligibility"
+3. "How do I restart the worker?" vs "recover the background processor"
+
+BM25 can miss these when term overlap is weak. Embeddings often recover them.
+
+### Conceptual retrieval over large corpora
+
+Semantic retrieval is also stronger when the corpus contains many related documents and the user query is abstract rather than literal.
+
+That can happen in:
+
+1. knowledge bases
+2. support archives
+3. research corpora
+4. design documents
+5. policy collections
+
+If the query is "what are the tradeoffs of retrieval latency vs grounding quality?" the right answer-bearing passages may not share the exact same words. Semantic retrieval is usually better positioned there.
+
+### BEIR and why this matters
+
+The BEIR benchmark paper, *BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval* (Thakur et al., 2021), is useful precisely because it shows retrieval performance is heterogeneous across tasks and domains. That is the point to remember here. There is no single "semantic always wins" story. Dense, sparse, lexical, and reranking methods behave differently depending on the dataset and query class.
+
+That is why retrieval architecture should be chosen from workload evidence, not retrieval folklore.
+
+## Where both fail
+
+Keyword and semantic search each have blind spots.
+
+Keyword search fails when:
+
+1. the wording differs too much
+2. the relevant document uses synonyms or paraphrases
+3. the query is underspecified conceptually
+
+Semantic search fails when:
+
+1. exact terms matter more than topic similarity
+2. rare identifiers are central
+3. the model retrieves conceptually nearby but operationally wrong passages
+
+In production RAG, these failures often coexist. Some user queries are lexical. Some are semantic. Some need both.
+
+That is why hybrid retrieval is usually the answer. Not because it sounds sophisticated, but because real user traffic is mixed.
+
+## Hybrid search patterns
+
+Hybrid search combines lexical and semantic signals instead of forcing one to win globally.
+
+This usually works better because the system can capture:
+
+1. exact-match strength from keyword search
+2. paraphrase and topical strength from vector search
+
+### Reciprocal Rank Fusion
+
+RRF, or Reciprocal Rank Fusion, is one of the cleanest hybrid methods.
+
+The idea is simple:
+
+1. run multiple retrievers
+2. take their ranked lists
+3. combine them using a rank-based fusion score
+
+RRF is popular because it is practical. It does not require scores from different systems to be perfectly calibrated on the same scale. It only needs the rankings.
+
+### Weighted fusion
+
+Another common pattern is weighted score fusion.
+
+The system combines:
+
+1. lexical score
+2. semantic score
+
+with chosen weights.
+
+This can work well, but it is more sensitive to calibration because BM25-style scores and embedding similarity scores do not naturally live on the same scale. In practice, weighted fusion often needs normalization and tuning.
+
+### Re-ranking
+
+Hybrid retrieval often improves further with re-ranking.
+
+A common production stack looks like:
+
+1. retrieve candidates with BM25
+2. retrieve candidates with vector search
+3. merge the results
+4. re-rank the merged list with a stronger model
+
+This is often the most effective pattern because first-stage retrieval prioritizes recall, while reranking prioritizes final relevance.
+
+Re-ranking matters because hybrid fusion alone still returns candidates from imperfect first-stage systems. A good reranker can clean that up.
+
+<HybridSearchDiagram />
+
+### Why hybrid is usually right and still not free
+
+Hybrid retrieval solves more query types, but it also adds system complexity.
+
+You now have to manage:
+
+1. two retrieval systems instead of one
+2. fusion logic
+3. score or rank combination
+4. more evaluation work
+5. often a reranking step on top
+
+That extra complexity is usually worth it in production because mixed query traffic is normal. But it does mean hybrid should be treated as architecture, not a checkbox. If you adopt hybrid search, you should also adopt better observability and evaluation so you can tell whether the added recall is actually helping downstream answer quality.
+
+## Practical decision guide
+
+The fastest way to choose the right approach is to ask what kind of queries dominate your system.
+
+### Choose keyword-first when
+
+1. exact terminology matters
+2. identifiers and literals are common
+3. domain vocabulary is highly specific
+4. transparency and explainability are important
+
+### Choose semantic-first when
+
+1. users phrase the same concept many different ways
+2. the corpus is broad and concept-heavy
+3. exact wording overlap is weak
+4. retrieval needs to bridge natural-language variation
+
+### Choose hybrid when
+
+1. your query mix is heterogeneous
+2. some users search by exact term and others by intent
+3. you are building a production RAG system
+4. you care about robust recall more than elegance of architecture
+
+For most real-world AI applications, especially the kind described in [How to build a RAG system from scratch](/guides/how-to-build-rag), hybrid should be the default starting assumption unless the workload clearly proves otherwise.
+
+### One more practical rule
+
+Do not optimize retrieval architecture before evaluating retrieval behavior.
+
+Start with:
+
+1. a baseline BM25 run
+2. a baseline semantic run
+3. a small query set from real use
+4. failure analysis by query type
+
+Then decide if hybrid is worth the added complexity. In many cases it is. But the important step is to learn from the workload rather than choose from hype.
+
+### How retrieval failures show up downstream
+
+In RAG systems, retrieval mistakes rarely stay isolated.
+
+They usually surface as:
+
+1. answers that sound confident but cite the wrong evidence
+2. refusals even though the corpus contains the answer
+3. partial answers because one key chunk was missed
+4. hallucination pressure when the prompt contains near-miss context instead of answer-bearing context
+
+This is why search choice is not only a search problem. It directly shapes generation quality. A weak retriever makes the model look worse than it is, while a strong retriever makes the whole application feel smarter with no model change at all.
+
+## Python example
+
+The example below shows the shape of comparing a simple lexical retriever and a simple vector retriever on the same query.
+
+```python
+# pip install -U rank-bm25 numpy
+from rank_bm25 import BM25Okapi
+import numpy as np
+
+docs = [
+    "Annual plans are eligible for refund within 14 days of purchase.",
+    "Duplicate charge prevention relies on idempotency keys.",
+    "Background workers can be restarted from the admin console.",
+]
+
+query = "How do I get my money back for an annual subscription?"
+
+# BM25
+tokenized_docs = [doc.lower().split() for doc in docs]
+bm25 = BM25Okapi(tokenized_docs)
+bm25_scores = bm25.get_scores(query.lower().split())
+
+# Fake 3D embeddings for illustration only
+doc_vectors = np.array([
+    [0.90, 0.10, 0.10],  # refund
+    [0.20, 0.95, 0.10],  # billing
+    [0.10, 0.10, 0.95],  # worker restart
+])
+query_vector = np.array([0.88, 0.12, 0.08])
+
+def cosine(a, b):
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+vector_scores = [cosine(query_vector, v) for v in doc_vectors]
+
+print("BM25 ranking:")
+for idx in np.argsort(bm25_scores)[::-1]:
+    print(round(float(bm25_scores[idx]), 3), docs[idx])
+
+print("\nVector ranking:")
+for idx in np.argsort(vector_scores)[::-1]:
+    print(round(float(vector_scores[idx]), 3), docs[idx])
+```
+
+This toy example is not about benchmarking. It is about intuition. The lexical retriever ranks by term overlap and BM25 weighting. The vector retriever ranks by semantic closeness. In real systems, you would evaluate both against real queries before trusting either one.
+
+## What this means
+
+The useful debate is not "keyword or semantic?" The useful debate is "what query classes fail under each approach, and how should the system respond?"
+
+BM25 is still a serious retrieval method. Semantic search is genuinely powerful. BEIR is a useful reminder that retrieval performance depends heavily on task and domain, not ideology. And in production, hybrid search usually wins because users do not all search the same way.
+
+That is the practical takeaway. Use keyword retrieval when exact language matters. Use semantic retrieval when vocabulary mismatch is the core problem. Use hybrid retrieval when your workload is real enough to contain both. Then evaluate it continuously, because retrieval quality is not a one-time design choice. It is an operating characteristic of the whole system.
+
+The teams that get search right are usually the teams that stop asking which method is "best" in the abstract. They ask which failure mode costs them the most, which retriever catches it best, and how that choice changes downstream answer quality for real users.
+
+That is the level where retrieval architecture becomes real engineering instead of preference.

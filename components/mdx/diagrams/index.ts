@@ -19,3 +19,5 @@ export { DocumentParsingDiagram } from "./DocumentParsingDiagram";
 export { MultimodalPipelineDiagram } from "./MultimodalPipelineDiagram";
 export { SystemPromptAnatomyDiagram } from "./SystemPromptAnatomyDiagram";
 export { PromptStackDiagram } from "./PromptStackDiagram";
+export { SearchComparisonDiagram } from "./SearchComparisonDiagram";
+export { HybridSearchDiagram } from "./HybridSearchDiagram";

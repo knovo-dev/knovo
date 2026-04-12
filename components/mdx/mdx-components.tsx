@@ -24,6 +24,8 @@ import {
   MultimodalPipelineDiagram,
   SystemPromptAnatomyDiagram,
   PromptStackDiagram,
+  SearchComparisonDiagram,
+  HybridSearchDiagram,
 } from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
@@ -98,4 +100,6 @@ export const mdxComponents: MDXComponents = {
   MultimodalPipelineDiagram,
   SystemPromptAnatomyDiagram,
   PromptStackDiagram,
+  SearchComparisonDiagram,
+  HybridSearchDiagram,
 };
