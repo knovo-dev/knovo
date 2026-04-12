@@ -11,3 +11,5 @@ export { ThinkDoInteractDiagram } from "./ThinkDoInteractDiagram";
 export { AiConcentrationDiagram } from "./AiConcentrationDiagram";
 export { ThreeOpportunityTypesDiagram } from "./ThreeOpportunityTypesDiagram";
 export { PhysicalSocialGapDiagram } from "./PhysicalSocialGapDiagram";
+export { StructuredOutputPipelineDiagram } from "./StructuredOutputPipelineDiagram";
+export { StructuredOutputFailuresDiagram } from "./StructuredOutputFailuresDiagram";
