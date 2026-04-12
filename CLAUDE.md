@@ -9,9 +9,9 @@
 ## Article plan
 - Target: **52 articles** (50-article plan + 2 ad-hoc MIT research articles)
 - Plan source: `Knovo_50Articles_Plan_22Mar2026 1.docx`
-- Current count: **20 articles live** as of 2026-04-13
+- Current count: **21 articles live** as of 2026-04-13
 - Ad-hoc articles (not in plan): `where-ai-is-going-mit-research` and `ai-opportunity-gaps-mit-research`
-- Next to write: **Plan #21** — token limits and context window management
+- Next to write: **Plan #22** — AI agents in production: reliability, observability, and failure modes
 
 ## Codex task handoff
 - Give the Codex prompt **directly in chat** — short and actionable
