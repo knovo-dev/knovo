@@ -137,7 +137,7 @@ Pinecone is strongest when:
 
 Its current product direction also makes it attractive if you want embeddings and reranking available in the same platform, since Pinecone hosts both database and inference services.
 
-### Architecture and deployment
+### Pinecone: architecture and deployment
 
 Pinecone is managed first. That is the point.
 
@@ -149,7 +149,7 @@ Today the main deployment story is:
 
 That last option matters for regulated or security-sensitive workloads, but the common case is still serverless managed deployment.
 
-### Cost model
+### Pinecone: cost model
 
 Pinecone's official cost docs say serverless indexes are billed using three usage metrics:
 
@@ -165,7 +165,7 @@ That makes Pinecone easy to reason about for bursty workloads, but less intuitiv
 
 Pinecone is usually easiest to justify when team time matters more than squeezing infra cost to the floor.
 
-### The main downside
+### Pinecone: the main downside
 
 The downside is not capability. It is ownership and cost control.
 
@@ -188,7 +188,7 @@ Weaviate makes sense when:
 
 This is one reason Weaviate shows up often in serious RAG stacks: it gives you more knobs earlier.
 
-### Architecture and deployment
+### Weaviate: architecture and deployment
 
 Weaviate's docs present multiple deployment paths:
 
@@ -201,7 +201,7 @@ That range is a real advantage. You can prototype locally, self-host if needed, 
 
 On the indexing side, Weaviate documents several vector index types and treats HNSW as the usual default. It also supports flat and dynamic modes, which can matter for smaller collections or evolving workloads.
 
-### Cost model
+### Weaviate: cost model
 
 Weaviate's managed cloud pricing is cluster and usage oriented rather than "pure serverless vector ops" in the Pinecone sense. Official billing docs emphasize active cluster billing, monthly cycles, and support-plan tiers, with high availability included in paid plans.
 
@@ -211,7 +211,7 @@ The practical implication is:
 2. Self-hosting can reduce vendor spend but increases operational burden
 3. The total cost depends heavily on whether you value hybrid search and configurability enough to own more complexity
 
-### The main downside
+### Weaviate: the main downside
 
 Weaviate's downside is that it asks more of you.
 
@@ -242,7 +242,7 @@ pgvector is strongest when:
 
 This can be a major simplifier. You avoid keeping a dedicated vector store and a relational source of truth in sync across two different systems.
 
-### Architecture and indexing
+### pgvector: architecture and indexing
 
 pgvector supports exact search by default, which means perfect recall until you add ANN indexes. Official docs say exact nearest-neighbor search is the default behavior.
 
@@ -258,7 +258,7 @@ The docs make the tradeoffs very explicit:
 
 This is one of pgvector's strengths. It stays close to SQL reality. You can combine vector search with ordinary Postgres indexes, filtering, partitioning, partial indexes, and relational joins. That makes it unusually flexible for application data that is not cleanly separable from the transactional layer.
 
-### Cost model
+### pgvector: cost model
 
 The cost model for pgvector is basically the cost model for Postgres.
 
@@ -276,7 +276,7 @@ But it also means:
 
 pgvector looks cheapest when you already have strong Postgres ops. It looks much less cheap when you count the hidden cost of tuning and capacity planning if your team does not.
 
-### The main downside
+### pgvector: the main downside
 
 pgvector is the least "batteries included" option in terms of dedicated search-platform ergonomics.
 
@@ -312,13 +312,13 @@ Chroma is strongest when:
 
 For agent builders, notebook workflows, and early RAG products, this is a real advantage. Chroma is often the lowest-friction path from local experiment to something persistent.
 
-### Architecture and deployment
+### Chroma: architecture and deployment
 
 Chroma's docs emphasize modular architecture and consistent APIs across local, single-node, and distributed modes. Under the hood it delegates heavily to well-understood subsystems like SQLite and cloud object storage, which is part of why the developer experience feels straightforward.
 
 That design choice is practical. It avoids forcing every user into a distributed-cluster mindset from day one.
 
-### Cost model
+### Chroma: cost model
 
 Chroma Cloud currently uses a usage-based model with charges tied to writes, storage, query volume, and network egress. That is closer to a modern serverless retrieval bill than a fixed-cluster database bill.
 
@@ -329,7 +329,7 @@ The important distinction is that Chroma gives you multiple cost postures:
 
 That flexibility makes it particularly appealing for teams whose main question is not "what is the ultimate enterprise architecture?" but "how do we move from prototype to production without rewriting the whole retrieval layer?"
 
-### The main downside
+### Chroma: the main downside
 
 Chroma's downside is that it is usually not the first system people choose when they already know they need heavyweight enterprise retrieval infrastructure, advanced tuning, or deep SQL integration.
 
