@@ -208,10 +208,11 @@ Hardware fit is not the only decision. You still need the right model family for
 
 In practice, local teams often compare open models like:
 
-1. Llama 3 for broad general-purpose assistant behavior
-2. Mistral for compact instruction-following setups
-3. Gemma for lightweight evaluation and deployment paths
-4. Phi for small-model experiments and constrained environments
+1. Llama 4 (Scout, Maverick) for the current Meta flagship — natively multimodal MoE models released April 2026, available in Ollama
+2. Llama 3 for proven general-purpose assistant behavior on well-tested local stacks
+3. Mistral for compact instruction-following setups
+4. Gemma for lightweight evaluation and deployment paths
+5. Phi for small-model experiments and constrained environments
 
 The right answer is rarely "use the biggest model that fits." The useful question is which model gives acceptable behavior for the task at a memory footprint and throughput your system can actually sustain.
 
@@ -233,7 +234,13 @@ Download Ollama from the official site or install using the platform package flo
 
 ### Run a model
 
-The model library page for Llama 3 shows the standard command:
+The model library shows a simple run command. For the current Meta flagship:
+
+```bash
+ollama run llama4
+```
+
+For the proven Llama 3 generation:
 
 ```bash
 ollama run llama3
@@ -249,7 +256,7 @@ Ollama also exposes a local HTTP API. The official model page shows a `curl` exa
 
 ```bash
 curl -X POST http://localhost:11434/api/generate -d '{
-  "model": "llama3",
+  "model": "llama4",
   "prompt": "Why is the sky blue?"
 }'
 ```

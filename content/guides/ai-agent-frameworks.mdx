@@ -40,7 +40,7 @@ Use the framework as a force multiplier, not as a substitute for system design.
 | --- | --- | --- | --- | --- |
 | LangGraph | Explicit state graph (nodes + edges + routing) | Medium to high | Complex, stateful, multi-step agent workflows | High when you need deterministic control + observability |
 | CrewAI | Role/task-based crews (agents, tasks, process) | Low to medium | Business workflows and fast delivery with clear role separation | High for common business automations; very fast to first production |
-| AutoGen | Conversation-driven multi-agent collaboration | Medium | Research and conversational multi-agent experiments | Usable, but roadmap has shifted toward migration to Microsoft Agent Framework |
+| AutoGen | Conversation-driven multi-agent collaboration | Medium | Research and conversational multi-agent experiments | Usable for existing codebases; Microsoft Agent Framework (GA Q1 2026) is the successor |
 | OpenAI Agents SDK | Lightweight agent + handoff model with tracing | Low to medium | Rapid prototyping and lean agent orchestration | Strong for quick builds; add adapters for non-OpenAI providers in broader stacks |
 
 Short version:
@@ -175,7 +175,7 @@ If your goal is "ship business automation soon," CrewAI is often the most practi
 
 ## 5. AutoGen deep dive
 
-AutoGen helped define modern conversation-based multi-agent patterns. It is still useful, especially for teams already running AutoGen workloads. But in 2026, the strategic context matters: Microsoft has shifted focus toward Microsoft Agent Framework, and migration guidance from AutoGen is now a first-class part of the official docs.
+AutoGen helped define modern conversation-based multi-agent patterns. It is still useful, especially for teams already running AutoGen workloads. But in 2026, the strategic context matters: **Microsoft Agent Framework reached general availability in Q1 2026**, merging AutoGen and Semantic Kernel into a single unified framework. Migration guidance from AutoGen is now a first-class part of the official docs.
 
 Practical interpretation:
 
