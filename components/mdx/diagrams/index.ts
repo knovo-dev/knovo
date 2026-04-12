@@ -21,3 +21,5 @@ export { SystemPromptAnatomyDiagram } from "./SystemPromptAnatomyDiagram";
 export { PromptStackDiagram } from "./PromptStackDiagram";
 export { SearchComparisonDiagram } from "./SearchComparisonDiagram";
 export { HybridSearchDiagram } from "./HybridSearchDiagram";
+export { LocalLlmToolsDiagram } from "./LocalLlmToolsDiagram";
+export { LocalLlmHardwareDiagram } from "./LocalLlmHardwareDiagram";

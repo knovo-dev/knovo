@@ -26,6 +26,8 @@ import {
   PromptStackDiagram,
   SearchComparisonDiagram,
   HybridSearchDiagram,
+  LocalLlmToolsDiagram,
+  LocalLlmHardwareDiagram,
 } from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
@@ -102,4 +104,6 @@ export const mdxComponents: MDXComponents = {
   PromptStackDiagram,
   SearchComparisonDiagram,
   HybridSearchDiagram,
+  LocalLlmToolsDiagram,
+  LocalLlmHardwareDiagram,
 };
