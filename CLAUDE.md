@@ -9,9 +9,9 @@
 ## Article plan
 - Target: **52 articles** (50-article plan + 2 ad-hoc MIT research articles)
 - Plan source: `Knovo_50Articles_Plan_22Mar2026 1.docx`
-- Current count: **19 articles live** as of 2026-04-13
+- Current count: **20 articles live** as of 2026-04-13
 - Ad-hoc articles (not in plan): `where-ai-is-going-mit-research` and `ai-opportunity-gaps-mit-research`
-- Next to write: **Plan #20** — hallucination: causes, detection, and mitigation
+- Next to write: **Plan #21** — token limits and context window management
 
 ## Codex task handoff
 - Give the Codex prompt **directly in chat** — short and actionable
