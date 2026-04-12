@@ -9,9 +9,9 @@
 ## Article plan
 - Target: **52 articles** (50-article plan + 2 ad-hoc MIT research articles)
 - Plan source: `Knovo_50Articles_Plan_22Mar2026 1.docx`
-- Current count: **14 articles live** as of 2026-04-02
+- Current count: **15 articles live** as of 2026-04-12
 - Ad-hoc articles (not in plan): `where-ai-is-going-mit-research` and `ai-opportunity-gaps-mit-research`
-- Next to write: **Plan #13** — vector databases compared (Pinecone vs Weaviate vs pgvector vs Chroma)
+- Next to write: **Plan #14** — structured output: getting reliable JSON from any LLM
 
 ## Codex task handoff
 - Give the Codex prompt **directly in chat** — short and actionable
