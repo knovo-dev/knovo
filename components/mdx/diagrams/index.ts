@@ -25,3 +25,5 @@ export { LocalLlmToolsDiagram } from "./LocalLlmToolsDiagram";
 export { LocalLlmHardwareDiagram } from "./LocalLlmHardwareDiagram";
 export { HallucinationTaxonomyDiagram } from "./HallucinationTaxonomyDiagram";
 export { HallucinationMitigationDiagram } from "./HallucinationMitigationDiagram";
+export { TokenAnatomyDiagram } from "./TokenAnatomyDiagram";
+export { ContextWindowStrategiesDiagram } from "./ContextWindowStrategiesDiagram";
