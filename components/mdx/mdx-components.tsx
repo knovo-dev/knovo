@@ -28,6 +28,8 @@ import {
   HybridSearchDiagram,
   LocalLlmToolsDiagram,
   LocalLlmHardwareDiagram,
+  HallucinationTaxonomyDiagram,
+  HallucinationMitigationDiagram,
 } from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
@@ -106,4 +108,6 @@ export const mdxComponents: MDXComponents = {
   HybridSearchDiagram,
   LocalLlmToolsDiagram,
   LocalLlmHardwareDiagram,
+  HallucinationTaxonomyDiagram,
+  HallucinationMitigationDiagram,
 };

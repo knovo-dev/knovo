@@ -23,3 +23,5 @@ export { SearchComparisonDiagram } from "./SearchComparisonDiagram";
 export { HybridSearchDiagram } from "./HybridSearchDiagram";
 export { LocalLlmToolsDiagram } from "./LocalLlmToolsDiagram";
 export { LocalLlmHardwareDiagram } from "./LocalLlmHardwareDiagram";
+export { HallucinationTaxonomyDiagram } from "./HallucinationTaxonomyDiagram";
+export { HallucinationMitigationDiagram } from "./HallucinationMitigationDiagram";
