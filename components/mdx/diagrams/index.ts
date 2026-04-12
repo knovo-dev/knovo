@@ -17,3 +17,5 @@ export { EvalLayersDiagram } from "./EvalLayersDiagram";
 export { EvalLoopDiagram } from "./EvalLoopDiagram";
 export { DocumentParsingDiagram } from "./DocumentParsingDiagram";
 export { MultimodalPipelineDiagram } from "./MultimodalPipelineDiagram";
+export { SystemPromptAnatomyDiagram } from "./SystemPromptAnatomyDiagram";
+export { PromptStackDiagram } from "./PromptStackDiagram";

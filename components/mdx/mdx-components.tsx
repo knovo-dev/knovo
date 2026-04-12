@@ -22,6 +22,8 @@ import {
   EvalLoopDiagram,
   DocumentParsingDiagram,
   MultimodalPipelineDiagram,
+  SystemPromptAnatomyDiagram,
+  PromptStackDiagram,
 } from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
@@ -94,4 +96,6 @@ export const mdxComponents: MDXComponents = {
   EvalLoopDiagram,
   DocumentParsingDiagram,
   MultimodalPipelineDiagram,
+  SystemPromptAnatomyDiagram,
+  PromptStackDiagram,
 };
