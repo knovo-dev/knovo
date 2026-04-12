@@ -13,3 +13,5 @@ export { ThreeOpportunityTypesDiagram } from "./ThreeOpportunityTypesDiagram";
 export { PhysicalSocialGapDiagram } from "./PhysicalSocialGapDiagram";
 export { StructuredOutputPipelineDiagram } from "./StructuredOutputPipelineDiagram";
 export { StructuredOutputFailuresDiagram } from "./StructuredOutputFailuresDiagram";
+export { EvalLayersDiagram } from "./EvalLayersDiagram";
+export { EvalLoopDiagram } from "./EvalLoopDiagram";

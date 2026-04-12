@@ -18,6 +18,8 @@ import {
   PhysicalSocialGapDiagram,
   StructuredOutputPipelineDiagram,
   StructuredOutputFailuresDiagram,
+  EvalLayersDiagram,
+  EvalLoopDiagram,
 } from "@/components/mdx/diagrams";
 
 function slugify(input: string) {
@@ -86,4 +88,6 @@ export const mdxComponents: MDXComponents = {
   PhysicalSocialGapDiagram,
   StructuredOutputPipelineDiagram,
   StructuredOutputFailuresDiagram,
+  EvalLayersDiagram,
+  EvalLoopDiagram,
 };
